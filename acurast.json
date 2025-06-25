@@ -1,0 +1,67 @@
+{
+  "projects": {
+    "stxtz": {
+      "projectName": "stxtz",
+      "fileUrl": "dist/stxtz/index.js",
+      "network": "canary",
+      "startAt": {
+        "msFromNow": 300000
+      },
+      "onlyAttestedDevices": true,
+      "assignmentStrategy": {
+        "type": "Single"
+      },
+      "execution": {
+        "type": "interval",
+        "intervalInMs": 3600000,
+        "numberOfExecutions": 168
+      },
+      "maxAllowedStartDelayInMs": 30000,
+      "usageLimit": {
+        "maxMemory": 0,
+        "maxNetworkRequests": 0,
+        "maxStorage": 0
+      },
+      "numberOfReplicas": 1,
+      "requiredModules": ["DataEncryption"],
+      "includeEnvironmentVariables": [],
+      "minProcessorReputation": 0,
+      "maxCostPerExecution": 10000000000,
+      "minProcessorVersions": {
+        "android": 80
+      }
+    },
+    "testPixel5": {
+      "projectName": "stxtzTest",
+      "fileUrl": "dist/stxtz/index.js",
+      "network": "canary",
+      "startAt": {
+        "msFromNow": 180000
+      },
+      "onlyAttestedDevices": false,
+      "assignmentStrategy": {
+        "type": "Single"
+      },
+      "execution": {
+        "type": "interval",
+        "intervalInMs": 720000,
+        "numberOfExecutions": 840
+      },
+      "maxAllowedStartDelayInMs": 30000,
+      "usageLimit": {
+        "maxMemory": 0,
+        "maxNetworkRequests": 0,
+        "maxStorage": 0
+      },
+      "numberOfReplicas": 1,
+      "requiredModules": ["DataEncryption"],
+      "includeEnvironmentVariables": [],
+      "minProcessorReputation": 0,
+      "maxCostPerExecution": 100000000000,
+      "minProcessorVersions": {
+        "android": 76
+      },
+      "processorWhitelist": ["5F4dQdWBHRDsC1KenuAGqkZx2XN5LTGvVFxzKf4cUfkbSSwW"]
+    }
+  }
+}
