@@ -1,10 +1,26 @@
 {
   "name": "youves-acurast-jobs",
   "version": "1.0.0",
-  "description": "Youves Acurast Jobs - Tezos blockchain integration with Acurast",
+  "author": "",
   "main": "dist/stxtz/index.js",
+  "devDependencies": {
+    "@types/node": "^24.0.4",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "description": "Youves Acurast Jobs - Tezos blockchain integration with Acurast",
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "keywords": [
+    "tezos",
+    "acurast",
+    "blockchain",
+    "stxtz",
+    "taquito"
+  ],
+  "license": "MIT",
   "scripts": {
-    "build": "bun run build:stxtz",
     "build:stxtz": "NODE_ENV=production bun build scripts/stxtz/index.ts --outdir dist/stxtz --target node --minify --format cjs",
     "start": "bun run start:stxtz",
     "start:stxtz": "bun run dist/stxtz/index.js",
@@ -17,24 +33,9 @@
     "test": "bun test",
     "test:watch": "bun test --watch"
   },
-  "keywords": [
-    "tezos",
-    "acurast",
-    "blockchain",
-    "stxtz",
-    "taquito"
-  ],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
-    "@acurast-processor/taquito": "^0.0.3",
-    "@taquito/taquito": "^22.0.0"
+    "@acelon/acelon-sdk": "^1.4.4",
+    "ethers": "^6.14.4"
   },
-  "devDependencies": {
-    "prettier": "^3.0.0",
-    "typescript": "^5.0.0"
-  },
-  "engines": {
-    "bun": ">=1.0.0"
-  }
+  "packageManager": "yarn@4.7.0+sha512.5a0afa1d4c1d844b3447ee3319633797bcd6385d9a44be07993ae52ff4facabccafb4af5dcd1c2f9a94ac113e5e9ff56f6130431905884414229e284e37bb7c9"
 }

@@ -1,47 +1,64 @@
-import { TezosToolkit } from '@taquito/taquito'
+import { AcelonSdkOptions, FetchPricesParams } from '@acelon/acelon-sdk/dist/types'
 import { findReachableRpc, log } from './utils'
-import { AcurastSigner } from '@acurast-processor/taquito'
-
-async function makeContractCall(tezos: TezosToolkit) {
-  try {
-    log('🔄 Starting contract call...')
-
-    const contractAddress = 'KT1A1rYxVnnQvKpRQ4mis2jiVtWdn3p3rUEG'
-    const contract = await tezos.contract.at(contractAddress)
-
-    const operation = await contract.methodsObject.default().send()
-
-    log(`📤 Contract call sent. Operation hash: ${operation.hash}`)
-
-    // Wait for confirmation
-    await operation.confirmation(1)
-    log(`✅ Contract call confirmed! Block: ${operation.includedInBlock}`)
-  } catch (error) {
-    log(`❌ Contract call failed: ${error}`, 'error')
-  }
-}
+import { callUpdatePriceFeeds } from './evm'
+import { AcelonSdk } from '@acelon/acelon-sdk'
+import { PRICE_FEED_CONTRACT } from './environment'
 
 async function main() {
-  // Find a reachable RPC node before initializing TezosToolkit
-  const reachableRpcUrl = await findReachableRpc()
-  if (!reachableRpcUrl) {
-    log('❌ No reachable RPC nodes available. Retrying later...', 'error')
+  // Find a reachable Etherlink RPC
+  const reachableEthRpcUrl = await findReachableRpc()
+  if (!reachableEthRpcUrl) {
+    log('❌ No reachable Etherlink RPC nodes available. Retrying later...', 'error')
     return
   }
-  const tezos = new TezosToolkit(reachableRpcUrl)
-  log(`✅ Initialized TezosToolkit with RPC: ${reachableRpcUrl}`)
 
-  //Setting acurast signer for taquito
-  const acurastSigner = new AcurastSigner()
-  tezos.setProvider({
-    signer: acurastSigner,
-  })
+  //Initialize AcelonSDK
+  const options: AcelonSdkOptions = {
+    logging: true,
+  }
+  const acelon = new AcelonSdk(options)
 
-  const ownAddress = await tezos.signer.publicKeyHash()
-  log(`📬 Own address: ${ownAddress}`)
+  //Fetch prices
+  const params: FetchPricesParams = {
+    pairs: [
+      {
+        from: 'STXTZ',
+        to: 'XTZ',
+        decimals: 6,
+      },
+    ],
+    protocol: 'EVM',
+    maxValidationDiff: 0.1,
+  }
 
-  // Make initial contract call
-  await makeContractCall(tezos)
+  const prices = await acelon.getPrices(params, 3)
+  log(`📊 Prices: ${JSON.stringify(prices, null, 2)}`)
+
+  // Check if we got any price results
+  if (!prices || prices.length === 0) {
+    log('❌ No price data received from Acelon SDK', 'error')
+    return
+  }
+
+  // Call Etherlink contract with the fetched price data
+  try {
+    log('🔗 Calling Etherlink contract to update price feeds...')
+    
+    // Get the first price result
+    const priceResult = prices[0]
+    
+    // Call the contract using the reachable Etherlink RPC
+    const txHash = await callUpdatePriceFeeds(
+      reachableEthRpcUrl,
+      PRICE_FEED_CONTRACT,
+      priceResult.packed[0], // Single packed data string
+      priceResult.signatures // Array of signatures
+    )
+    
+    log(`✅ Successfully updated price feeds! Transaction hash: ${txHash}`)
+  } catch (error) {
+    log(`❌ Failed to update price feeds: ${error}`, 'error')
+  }
 }
 
 main().catch(error => log(`❌ Main: unhandled error: ${error}`, 'error'))
