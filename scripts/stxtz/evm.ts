@@ -1,5 +1,6 @@
 import { Interface, JsonRpcProvider } from 'ethers'
 import { log } from './utils'
+import { GAS_LIMITS } from './environment'
 
 // Type declaration for Acurast _STD_ global
 declare const _STD_: {
@@ -83,65 +84,25 @@ export function encodeUpdatePriceFeedsPayload(
 }
 
 /**
- * Gas estimation
+ * Gets hardcoded gas limits based on real-world transaction data
  */
-async function estimateGasAndPrices(
-  rpcUrl: string,
-  contractAddress: string,
-  updateData: string,
-  signatures: string[]
-): Promise<{
+function getGasLimits(): {
   gasLimit: string
   maxFeePerGas: string
   maxPriorityFeePerGas: string
-}> {
-  try {
-    const provider = new JsonRpcProvider(rpcUrl)
-    const iface = new Interface(PRICE_FEED_ABI)
+} {
+  log(`⛽ Using hardcoded gas limit: ${GAS_LIMITS.gasLimit}`)
+  log(
+    `💰 Using hardcoded maxFeePerGas: ${GAS_LIMITS.maxFeePerGas} wei (${(parseInt(GAS_LIMITS.maxFeePerGas) / 1e9).toFixed(2)} gwei)`
+  )
+  log(
+    `🎯 Using hardcoded maxPriorityFeePerGas: ${GAS_LIMITS.maxPriorityFeePerGas} wei (${(parseInt(GAS_LIMITS.maxPriorityFeePerGas) / 1e9).toFixed(2)} gwei)`
+  )
 
-    // Encode the transaction data
-    const data = iface.encodeFunctionData('updatePriceFeeds', [
-      [ensure0xPrefix(updateData)],
-      [signatures.map(sig => ensure0xPrefix(sig))],
-    ])
-
-    // Estimate gas limit and get fee data in parallel
-    const [estimatedGas, feeData] = await Promise.all([
-      provider.estimateGas({
-        to: contractAddress,
-        data: data,
-      }),
-      provider.getFeeData(),
-    ])
-
-    // Add 20% buffer to gas limit
-    const gasLimit = ((estimatedGas * 120n) / 100n).toString()
-
-    // Use ethers' recommended fees with slight buffer
-    const maxFeePerGas = feeData.maxFeePerGas
-      ? ((feeData.maxFeePerGas * 110n) / 100n).toString() // 10% buffer
-      : '17000000000' // fallback
-
-    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas
-      ? ((feeData.maxPriorityFeePerGas * 110n) / 100n).toString() // 10% buffer
-      : '10500000000' // fallback
-
-    log(`⛽ Estimated gas limit: ${gasLimit}`)
-    log(
-      `💰 Estimated maxFeePerGas: ${maxFeePerGas} wei (${(parseInt(maxFeePerGas) / 1e9).toFixed(2)} gwei)`
-    )
-    log(
-      `🎯 Estimated maxPriorityFeePerGas: ${maxPriorityFeePerGas} wei (${(parseInt(maxPriorityFeePerGas) / 1e9).toFixed(2)} gwei)`
-    )
-
-    return { gasLimit, maxFeePerGas, maxPriorityFeePerGas }
-  } catch (error) {
-    log(`⚠️ Ethers gas estimation failed: ${error}, using defaults`, 'warn')
-    return {
-      gasLimit: '500000',
-      maxFeePerGas: '17000000000',
-      maxPriorityFeePerGas: '10500000000',
-    }
+  return {
+    gasLimit: GAS_LIMITS.gasLimit,
+    maxFeePerGas: GAS_LIMITS.maxFeePerGas,
+    maxPriorityFeePerGas: GAS_LIMITS.maxPriorityFeePerGas,
   }
 }
 
@@ -163,13 +124,8 @@ export async function callUpdatePriceFeeds(
     try {
       const { payload, methodSignature } = encodeUpdatePriceFeedsPayload(updateData, signatures)
 
-      // Get dynamic gas estimates
-      const { gasLimit, maxFeePerGas, maxPriorityFeePerGas } = await estimateGasAndPrices(
-        rpcUrl,
-        contractAddress,
-        updateData,
-        signatures
-      )
+      // Get hardcoded gas limits based on real-world data
+      const { gasLimit, maxFeePerGas, maxPriorityFeePerGas } = getGasLimits()
 
       log(`🔄 Calling updatePriceFeeds on contract ${contractAddress}`)
       log(`📦 Update data: ${updateData}`)
