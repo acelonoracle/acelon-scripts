@@ -22,10 +22,11 @@
   "license": "MIT",
   "scripts": {
     "build:stxtz": "NODE_ENV=production bun build scripts/stxtz/index.ts --outdir dist/stxtz --target node --minify --format cjs",
-    "start": "bun run start:stxtz",
+    "build:peaq": "NODE_ENV=production bun build scripts/peaq/index.ts --outdir dist/peaq --target node --minify --format cjs",
     "start:stxtz": "bun run dist/stxtz/index.js",
-    "dev": "bun run dev:stxtz",
+    "start:peaq": "bun run dist/peaq/index.js",
     "dev:stxtz": "bun --watch scripts/stxtz/index.ts",
+    "dev:peaq": "bun --watch scripts/peaq/index.ts",
     "clean": "rm -rf dist",
     "prebuild": "bun run clean",
     "format": "prettier --write scripts/**/*.{ts,tsx,json} *.{json,md}",
