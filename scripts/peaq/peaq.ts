@@ -1,6 +1,6 @@
-import { Interface, JsonRpcProvider, Wallet } from 'ethers'
+import { Interface, Wallet } from 'ethers'
 import { log } from './utils'
-import { PRICE_FEED_CONTRACT, GAS_LIMITS } from './environment'
+import { GAS_LIMITS } from './environment'
 
 // ABI for the updatePriceFeeds function (same as stxtz)
 const PRICE_FEED_ABI = ['function updatePriceFeeds(bytes[] updateData, bytes[][] signature)']
@@ -22,7 +22,7 @@ export function encodeUpdatePriceFeedsPayload(
   updateData: string,
   signatures: string[]
 ): { payload: string; methodSignature: string } {
-  log(`📝 Encoding payload for updatePriceFeeds`)
+  // log(`📝 Encoding payload for updatePriceFeeds`)
 
   // Create the Interface for ABI encoding
   const iface = new Interface(PRICE_FEED_ABI)
@@ -39,8 +39,8 @@ export function encodeUpdatePriceFeedsPayload(
     [signatures.map(sig => ensure0xPrefix(sig))],
   ])
 
-  log(`📋 Method signature: ${methodSignature}`)
-  log(`🔗 Encoded data: ${encodedData}`)
+  // log(`📋 Method signature: ${methodSignature}`)
+  // log(`🔗 Encoded data: ${encodedData}`)
 
   return { payload: encodedData, methodSignature }
 }
@@ -51,20 +51,18 @@ export function encodeUpdatePriceFeedsPayload(
  * @param contractAddress The price feed contract address
  * @param packedData The packed price data
  * @param signatures Array of signatures for validation
+ * @param nonce Optional nonce for the transaction (if not provided, will fetch from network)
  * @returns Promise resolving to the transaction hash
  */
 export async function callUpdatePriceFeeds(
   wallet: Wallet,
   contractAddress: string,
   packedData: string,
-  signatures: string[]
+  signatures: string[],
+  nonce?: number
 ): Promise<string> {
   try {
-    log('🔗 Preparing PEAQ transaction...')
-
-    // Get the signer address
-    const signerAddress = await wallet.getAddress()
-    log(`📱 Signer Address: ${signerAddress}`)
+    log(`🔗 Preparing PEAQ transaction for nonce: ${nonce}`)
 
     // Encode the transaction data
     const { payload } = encodeUpdatePriceFeedsPayload(packedData, signatures)
@@ -75,6 +73,12 @@ export async function callUpdatePriceFeeds(
       throw new Error('Wallet must have a provider')
     }
     const feeData = await provider.getFeeData()
+    // console.log(feeData)
+    
+
+    // Get nonce if not provided
+    const transactionNonce = nonce !== undefined ? nonce : await wallet.getNonce()
+    // log(`🔢 Using nonce: ${transactionNonce}`)
 
     // Prepare the transaction
     const transaction = {
@@ -82,13 +86,14 @@ export async function callUpdatePriceFeeds(
       data: payload,
       gasLimit: BigInt(GAS_LIMITS.gasLimit),
       maxFeePerGas: feeData.maxFeePerGas || BigInt(GAS_LIMITS.maxFeePerGas),
-      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas || BigInt(GAS_LIMITS.maxPriorityFeePerGas),
+      maxPriorityFeePerGas: feeData.maxFeePerGas || BigInt(GAS_LIMITS.maxPriorityFeePerGas),
+      nonce: transactionNonce,
     }
 
-    log('📝 Transaction prepared')
-    log(`⛽ Gas Limit: ${transaction.gasLimit.toString()}`)
-    log(`💰 Max Fee Per Gas: ${transaction.maxFeePerGas?.toString()}`)
-    log(`🎯 Max Priority Fee Per Gas: ${transaction.maxPriorityFeePerGas?.toString()}`)
+    log(`📝 Transaction prepared, nonce: ${transactionNonce}`)
+    // log(`⛽ Gas Limit: ${transaction.gasLimit.toString()}`)
+    // log(`💰 Max Fee Per Gas: ${transaction.maxFeePerGas?.toString()}`)
+    // log(`🎯 Max Priority Fee Per Gas: ${transaction.maxPriorityFeePerGas?.toString()}`)
 
     // Sign and send the transaction
     const tx = await wallet.sendTransaction(transaction)
@@ -100,7 +105,6 @@ export async function callUpdatePriceFeeds(
 
     return tx.hash
   } catch (error) {
-    log(`❌ Failed to call update price feeds: ${error}`, 'error')
     throw error
   }
 }
