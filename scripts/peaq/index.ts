@@ -6,95 +6,6 @@ import { PRICE_FEED_CONTRACT, NETWORK, ORACLES, PAIRS, WINDOW_INTERVAL_MS } from
 import { JsonRpcProvider, Wallet } from 'ethers'
 
 /**
- * Process a single price result to update the chain
- */
-async function processIndividualPriceUpdate(
-  priceResult: any,
-  pairName: string,
-  wallet: Wallet,
-  nonce: number
-): Promise<void> {
-  try {
-    log(`🔄 Updating chain for ${pairName} with nonce ${nonce}`)
-
-    log(
-      `🪙✅ ${pairName} Price: ${priceResult.priceData.price}, RequestHash: ${priceResult.priceData.requestHash}`
-    )
-
-    // Call the contract using the initialized wallet with the specified nonce
-    const txHash = await callUpdatePriceFeeds(
-      wallet,
-      PRICE_FEED_CONTRACT,
-      priceResult.packed[0], // Single packed data string
-      priceResult.signatures, // Array of signatures
-      nonce // Use the provided nonce
-    )
-
-    log(`✅ Successfully updated ${pairName} price feeds! Transaction hash: ${txHash}`)
-  } catch (error) {
-    throw error
-  }
-}
-
-/**
- * Fetch all prices at once using the provided SDK instance, then process each individually
- */
-async function processAllPairs(wallet: Wallet, acelon: AcelonSdk): Promise<void> {
-  log('🚀 Starting batch price fetch followed by individual chain updates...')
-
-  try {
-    // Fetch prices for all pairs in a single call using the provided SDK instance
-    const params: FetchPricesParams = {
-      pairs: PAIRS.map(pair => ({
-        from: pair.from,
-        to: pair.to,
-        decimals: pair.decimals,
-      })),
-      protocol: 'EVM',
-      aggregation: ['median'],
-      maxValidationDiff: 0.1,
-    }
-
-    log(`📡 Fetching prices for ${PAIRS.length} pairs in batch...`)
-    const prices = await acelon.getPrices(params, 3)
-    // log(prices)
-
-    if (!prices || prices.length === 0) {
-      log('❌ No price data received from batch request', 'error')
-      return
-    }
-
-    log(`✅ Received ${prices.length} price results from batch request`)
-
-    // Fetch the current nonce once at the beginning
-    const baseNonce = await wallet.getNonce()
-    log(`🔢 Starting with base nonce: ${baseNonce}`)
-
-    // Process each price result individually for chain updates
-    const chainUpdatePromises = prices.map((priceResult, index) => {
-      const pairName = PAIRS[index]?.name || `Pair ${index}`
-      const pairNonce = baseNonce + index
-      return processIndividualPriceUpdate(priceResult, pairName, wallet, pairNonce)
-    })
-
-    // Execute all chain updates in parallel
-    const results = await Promise.allSettled(chainUpdatePromises)
-
-    // Log results
-    results.forEach((result, i) => {
-      const pairName = PAIRS[i]?.name || `Pair ${i}`
-      if (result.status === 'fulfilled') {
-        log(`✅ ${pairName} chain update completed successfully`)
-      } else {
-        log(`❌ ${pairName} chain update failed: ${result.reason}`, 'error')
-      }
-    })
-  } catch (error) {
-    log(`❌ Error in batch processing: ${error}`, 'error')
-  }
-}
-
-/**
  * Main loop that continuously processes pairs with window-based timing
  * Executes every WINDOW_INTERVAL_MS, waits for previous execution end.
  */
@@ -109,9 +20,55 @@ async function runMainLoop(wallet: Wallet, acelon: AcelonSdk): Promise<void> {
 
     try {
       log(`⏰ Starting new execution window at ${new Date(windowStartTime).toISOString()}`)
-      await processAllPairs(wallet, acelon)
+      
+      // Fetch prices for all pairs in a single call
+      const params: FetchPricesParams = {
+        pairs: PAIRS.map(pair => ({
+          from: pair.from,
+          to: pair.to,
+          decimals: pair.decimals,
+        })),
+        protocol: 'EVM',
+        aggregation: ['median'],
+        maxValidationDiff: 0.1,
+      }
+
+      log(`📡 Fetching prices for ${PAIRS.length} pairs in batch...`)
+      const prices = await acelon.getPrices(params, 3)
+
+      if (!prices || prices.length === 0) {
+        log('❌ No price data received from batch request', 'error')
+        continue
+      }
+
+      log(`✅ Received ${prices.length} price results from batch request`)
+
+      // Log price information for each pair
+      prices.forEach((result, index) => {
+        const pairName = PAIRS[index]?.name || `Pair ${index}`
+        log(
+          `🪙✅ ${pairName} Price: ${result.priceData.price}, RequestHash: ${result.priceData.requestHash}`
+        )
+      })
+
+      // Extract packed data and signatures from all price results
+      const packedDataArray = prices.map(result => result.packed[0])
+      const signaturesArray = prices.map(result => result.signatures)
+
+      console.log(packedDataArray)
+      console.log(signaturesArray)
+
+      // Call the contract with all price data in a single transaction
+      const txHash = await callUpdatePriceFeeds(
+        wallet,
+        PRICE_FEED_CONTRACT,
+        packedDataArray,
+        signaturesArray
+      )
+
+      log(`✅ Successfully updated all ${prices.length} price feeds in batched transaction! Hash: ${txHash}`)
     } catch (error) {
-      log(`❌ Error in loop: ${error}`, 'error')
+      log(`❌ Error in processing: ${error}`, 'error')
     }
 
     const executionTime = Date.now() - windowStartTime

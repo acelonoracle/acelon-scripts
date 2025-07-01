@@ -1,6 +1,6 @@
 import { Interface, Wallet } from 'ethers'
 import { log, sendHeartbeatUptimeKuma } from './utils'
-import { GAS_LIMITS } from './environment'
+import { GAS_LIMITS, NETWORK } from './environment'
 
 // ABI for the updatePriceFeeds function (same as stxtz)
 const PRICE_FEED_ABI = ['function updatePriceFeeds(bytes[] updateData, bytes[][] signature)']
@@ -13,16 +13,16 @@ function ensure0xPrefix(hex: string): string {
 }
 
 /**
- * Encodes the contract call payload for updatePriceFeeds function
- * @param updateData Array containing the packed price data
- * @param signatures Array of signature arrays
+ * Encodes the contract call payload for updatePriceFeeds function with multiple price data
+ * @param updateDataArray Array containing multiple packed price data entries
+ * @param signaturesArray Array of signature arrays, one for each price data entry
  * @returns Object containing the encoded payload and method signature
  */
 export function encodeUpdatePriceFeedsPayload(
-  updateData: string,
-  signatures: string[]
+  updateDataArray: string[],
+  signaturesArray: string[][]
 ): { payload: string; methodSignature: string } {
-  // log(`📝 Encoding payload for updatePriceFeeds`)
+  log(`📝 Encoding payload for updatePriceFeeds with ${updateDataArray.length} price entries`)
 
   // Create the Interface for ABI encoding
   const iface = new Interface(PRICE_FEED_ABI)
@@ -33,10 +33,10 @@ export function encodeUpdatePriceFeedsPayload(
     abi.startsWith('function updatePriceFeeds')
   )!
 
-  // Encode function data
+  // Encode function data with multiple entries
   const encodedData = iface.encodeFunctionData('updatePriceFeeds', [
-    [ensure0xPrefix(updateData)],
-    [signatures.map(sig => ensure0xPrefix(sig))],
+    updateDataArray.map(data => ensure0xPrefix(data)),
+    signaturesArray.map(signatures => signatures.map(sig => ensure0xPrefix(sig))),
   ])
 
   // log(`📋 Method signature: ${methodSignature}`)
@@ -49,23 +49,23 @@ export function encodeUpdatePriceFeedsPayload(
  * Calls the PEAQ price feed contract to update price data using ethers
  * @param wallet The ethers wallet instance to use for signing
  * @param contractAddress The price feed contract address
- * @param packedData The packed price data
- * @param signatures Array of signatures for validation
+ * @param packedDataArray Array of packed price data
+ * @param signaturesArray Array of signature arrays for validation
  * @param nonce Optional nonce for the transaction (if not provided, will fetch from network)
  * @returns Promise resolving to the transaction hash
  */
 export async function callUpdatePriceFeeds(
   wallet: Wallet,
   contractAddress: string,
-  packedData: string,
-  signatures: string[],
+  packedDataArray: string[],
+  signaturesArray: string[][],
   nonce?: number
 ): Promise<string> {
   try {
-    log(`🔗 Preparing PEAQ transaction for nonce: ${nonce}`)
+    log(`🔗 Preparing PEAQ transaction for ${packedDataArray.length} price entries with nonce: ${nonce}`)
 
     // Encode the transaction data
-    const { payload } = encodeUpdatePriceFeedsPayload(packedData, signatures)
+    const { payload } = encodeUpdatePriceFeedsPayload(packedDataArray, signaturesArray)
 
     // Get current gas price from the wallet's provider
     const provider = wallet.provider
@@ -103,7 +103,9 @@ export async function callUpdatePriceFeeds(
     const receipt = await tx.wait()
     log(`✅ Transaction confirmed in block ${receipt?.blockNumber}`)
 
-    sendHeartbeatUptimeKuma(1)
+    if (NETWORK === 'mainnet') {
+      sendHeartbeatUptimeKuma(1)
+    }
 
     return tx.hash
   } catch (error) {
