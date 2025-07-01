@@ -1,5 +1,5 @@
 import { Interface, Wallet } from 'ethers'
-import { log } from './utils'
+import { log, sendHeartbeatUptimeKuma } from './utils'
 import { GAS_LIMITS } from './environment'
 
 // ABI for the updatePriceFeeds function (same as stxtz)
@@ -73,7 +73,7 @@ export async function callUpdatePriceFeeds(
       throw new Error('Wallet must have a provider')
     }
     const feeData = await provider.getFeeData()
-    // console.log(feeData)
+    console.log(feeData)
     
 
     // Get nonce if not provided
@@ -102,6 +102,8 @@ export async function callUpdatePriceFeeds(
     // Wait for transaction confirmation
     const receipt = await tx.wait()
     log(`✅ Transaction confirmed in block ${receipt?.blockNumber}`)
+
+    sendHeartbeatUptimeKuma(1)
 
     return tx.hash
   } catch (error) {

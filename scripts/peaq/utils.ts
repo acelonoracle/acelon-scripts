@@ -16,21 +16,21 @@ export async function isRpcReachable(rpcUrl: string, timeout: number = 5000): Pr
     // Attempt to fetch the latest block number using JSON-RPC
     const fetchPromise = fetch(rpcUrl, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Accept: 'application/json',
       },
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'eth_blockNumber',
         params: [],
-        id: 1
-      })
+        id: 1,
+      }),
     })
 
     // Race the fetch against the timeout
     const response = (await Promise.race([fetchPromise, timeoutPromise])) as Response
-    
+
     if (!response.ok) {
       return false
     }
@@ -84,4 +84,18 @@ export function log(message: any, type: 'default' | 'warn' | 'error' = 'default'
     default:
       console.log(message)
   }
-} 
+}
+
+export async function sendHeartbeatUptimeKuma(fulfillCount: number) {
+  const heartbeatUrl = `https://uptime.papers.tech/api/push/kVvz3dwPQt?status=up&msg=FulfillingOK&ping=${fulfillCount}`
+  try {
+    const response = await fetch(heartbeatUrl, { method: 'GET' })
+    if (response.ok) {
+      console.log('💚 UptimeKuma heartbeat sent successfully')
+    } else {
+      console.error('❌ Failed to send UptimeKuma heartbeat')
+    }
+  } catch (error) {
+    console.error('🚨 Error sending heartbeat:', error)
+  }
+}
