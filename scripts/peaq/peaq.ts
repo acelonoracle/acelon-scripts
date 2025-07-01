@@ -73,7 +73,7 @@ export async function callUpdatePriceFeeds(
       throw new Error('Wallet must have a provider')
     }
     const feeData = await provider.getFeeData()
-    console.log(feeData)
+    // console.log(feeData)
     
 
     // Get nonce if not provided
