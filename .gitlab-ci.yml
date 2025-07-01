@@ -25,6 +25,7 @@ include:
 variables:
   TEST_TAG: $CI_PROJECT_NAME:test_$CI_COMMIT_SHA
   NAMESPACE: peaq-scripts
+  NETWORK: "mainnet"
 
 stages:
   - build
@@ -38,6 +39,7 @@ stages:
 build-dev:
   stage: build
   variables:
+    NETWORK: "testnet"
   script:
     - !reference [.base_build, script]
   environment:
@@ -47,6 +49,7 @@ build-dev:
 build-prod:
   stage: build
   variables:
+    NETWORK: "mainnet"
   script:
     - !reference [.base_build, script]
   environment:
@@ -58,19 +61,11 @@ build-prod:
     - find k8s -type f -name \*.yaml -exec sed -i "s|__NAMESPACE_NAME__|"$NAMESPACE"|g" {} +
     - find k8s -type f -name \*.yaml -exec sed -i "s|__PROJECT_NAME__|"$CI_PROJECT_NAME"|g" {} +
     - find k8s -type f -name \*.yaml -exec sed -i "s|__TO_BE_REPLACED_BY_IMAGE_TAG__|"$IMAGE_TAG"|g" {} +
+    - find k8s -type f -name \*.yaml -exec sed -i "s|__NETWORK__|"$NETWORK"|g" {} +
 
     # applying the files
     - kubectl apply -f k8s/common/namespace.yaml
     - kubectl apply -f k8s/common/ --recursive
-    
-    # Set environment-specific NETWORK variable
-    - |
-      if [ "$CI_ENVIRONMENT_NAME" = "production" ]; then
-        NETWORK_VALUE="mainnet"
-      else
-        NETWORK_VALUE="testnet"
-      fi
-      kubectl set env deployment/$CI_PROJECT_NAME NETWORK=$NETWORK_VALUE -n $NAMESPACE
 
 .deploy-dev:
   extends: .base_deployment

@@ -4,4 +4,4 @@ metadata:
     name: __PROJECT_NAME__-config-map
     namespace: __NAMESPACE_NAME__
 data:
-    # Add other non-sensitive environment variables here if needed
+    NETWORK: "__NETWORK__"
