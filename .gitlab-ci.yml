@@ -61,7 +61,6 @@ build-prod:
 
     # applying the files
     - kubectl apply -f k8s/common/namespace.yaml
-    - kubectl apply -f k8s/$CI_ENVIRONMENT_NAME/ --recursive
     - kubectl apply -f k8s/common/ --recursive
     
     # Set environment-specific NETWORK variable
