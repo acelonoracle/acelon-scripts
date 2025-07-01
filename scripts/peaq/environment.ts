@@ -11,7 +11,12 @@ export const RPC_URLS = {
 
 export const CURRENT_RPC_URLS = RPC_URLS[NETWORK as keyof typeof RPC_URLS] || RPC_URLS.testnet
 
-export const PRICE_FEED_CONTRACT = '0x9e78A0059B86432384275486D011FdC64a33Cd2f'
+export const PRICE_FEED_CONTRACTS = {
+  mainnet: '0xd1fc7673741b5f849db1cda3351f6dcaeb1f4960',
+  testnet: '0x9e78A0059B86432384275486D011FdC64a33Cd2f',
+}
+
+export const PRICE_FEED_CONTRACT = PRICE_FEED_CONTRACTS[NETWORK as keyof typeof PRICE_FEED_CONTRACTS] || PRICE_FEED_CONTRACTS.testnet
 
 export const GAS_LIMITS = {
   gasLimit: process.env.GAS_LIMIT || '10000000',
@@ -48,3 +53,5 @@ export const PAIRS = [
   { from: 'USDT', to: 'USD', decimals: 8, name: 'USDT/USD' },
   { from: 'PEAQ', to: 'USDT', decimals: 8, name: 'PEAQ/USDT' },
 ]
+
+export const WINDOW_INTERVAL_MS = 30 * 1000 // 30 seconds

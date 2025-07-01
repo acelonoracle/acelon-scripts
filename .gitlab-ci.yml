@@ -1,0 +1,88 @@
+include:
+  - project: 'papers/papers-internal/internal'
+    file: '/.base-gitlab-ci.yml'
+
+  # For development
+  - component: gitlab.papers.tech/papers/papers-internal/ci-cd-components/publish-local-registry@v0.0.44
+    inputs:
+      existing-tag: $GOOGLE_TAG-development
+      tag-to-publish: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  - component: gitlab.papers.tech/papers/papers-internal/ci-cd-components/deploy-self-hosted-dev@v0.0.44
+    inputs:
+      extends_script: .deploy-dev
+      environment: development
+
+  # For production
+  - component: gitlab.papers.tech/papers/papers-internal/ci-cd-components/k8s-publish-prod@v0.0.40
+    inputs:
+      existing-tag: $GOOGLE_TAG-production
+      tag-to-publish: $GOOGLE_TAG-production
+  - component: gitlab.papers.tech/papers/papers-internal/ci-cd-components/k8s-deploy-prod@v0.0.40
+    inputs:
+      extends_script: .deploy-prod
+      environment: production
+
+variables:
+  TEST_TAG: $CI_PROJECT_NAME:test_$CI_COMMIT_SHA
+  NAMESPACE: peaq-scripts
+
+stages:
+  - build
+  - publish
+  - deploy
+
+.base_build:
+  script:
+    - docker build -f Dockerfile.peaq -t $GOOGLE_TAG-$CI_ENVIRONMENT_NAME .
+
+build-dev:
+  stage: build
+  variables:
+  script:
+    - !reference [.base_build, script]
+  environment:
+    name: development
+    action: prepare
+
+build-prod:
+  stage: build
+  variables:
+  script:
+    - !reference [.base_build, script]
+  environment:
+    name: production
+    action: prepare
+
+.base_deployment:
+  script:
+    - find k8s -type f -name \*.yaml -exec sed -i "s|__NAMESPACE_NAME__|"$NAMESPACE"|g" {} +
+    - find k8s -type f -name \*.yaml -exec sed -i "s|__PROJECT_NAME__|"$CI_PROJECT_NAME"|g" {} +
+    - find k8s -type f -name \*.yaml -exec sed -i "s|__TO_BE_REPLACED_BY_IMAGE_TAG__|"$IMAGE_TAG"|g" {} +
+
+    # applying the files
+    - kubectl apply -f k8s/common/namespace.yaml
+    - kubectl apply -f k8s/$CI_ENVIRONMENT_NAME/ --recursive
+    - kubectl apply -f k8s/common/ --recursive
+    
+    # Set environment-specific NETWORK variable
+    - |
+      if [ "$CI_ENVIRONMENT_NAME" = "production" ]; then
+        NETWORK_VALUE="mainnet"
+      else
+        NETWORK_VALUE="testnet"
+      fi
+      kubectl set env deployment/$CI_PROJECT_NAME NETWORK=$NETWORK_VALUE -n $NAMESPACE
+
+.deploy-dev:
+  extends: .base_deployment
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  environment:
+    name: development
+
+.deploy-prod:
+  extends: .base_deployment
+  variables:
+    IMAGE_TAG: $GOOGLE_TAG-production
+  environment:
+    name: production

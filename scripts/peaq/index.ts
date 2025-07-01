@@ -2,7 +2,7 @@ import { AcelonSdkOptions, FetchPricesParams } from '@acelon/acelon-sdk/dist/typ
 import { findReachableRpc, log } from './utils'
 import { callUpdatePriceFeeds } from './peaq'
 import { AcelonSdk } from '@acelon/acelon-sdk'
-import { PRICE_FEED_CONTRACT, NETWORK, ORACLES, PAIRS } from './environment'
+import { PRICE_FEED_CONTRACT, NETWORK, ORACLES, PAIRS, WINDOW_INTERVAL_MS } from './environment'
 import { JsonRpcProvider, Wallet } from 'ethers'
 
 /**
@@ -89,8 +89,6 @@ async function processAllPairs(wallet: Wallet, acelon: AcelonSdk): Promise<void>
         log(`❌ ${pairName} chain update failed: ${result.reason}`, 'error')
       }
     })
-
-
   } catch (error) {
     log(`❌ Error in batch processing: ${error}`, 'error')
   }
@@ -101,8 +99,6 @@ async function processAllPairs(wallet: Wallet, acelon: AcelonSdk): Promise<void>
  * Executes every WINDOW_INTERVAL_MS, waits for previous execution end.
  */
 async function runMainLoop(wallet: Wallet, acelon: AcelonSdk): Promise<void> {
-  const WINDOW_INTERVAL_MS = 10000 // 10 seconds
-
   log(
     `🔄 Starting window-based main loop - will process pairs every ${WINDOW_INTERVAL_MS / 1000} seconds`
   )
@@ -156,7 +152,7 @@ async function main() {
   // Initialize AcelonSdk once
   const options: AcelonSdkOptions = {
     oracles: ORACLES,
-    logging: false,
+    logging: false
   }
   const acelon = new AcelonSdk(options)
   log(`🚀 AcelonSdk initialized with ${ORACLES.length} oracles`)

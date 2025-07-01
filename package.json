@@ -1,5 +1,5 @@
 {
-  "name": "youves-acurast-jobs",
+  "name": "acelon-scripts",
   "version": "1.0.0",
   "author": "",
   "main": "dist/stxtz/index.js",
@@ -8,16 +8,16 @@
     "prettier": "^3.0.0",
     "typescript": "^5.0.0"
   },
-  "description": "Youves Acurast Jobs - Tezos blockchain integration with Acurast",
+  "description": "Acelon Scripts ",
   "engines": {
     "bun": ">=1.0.0"
   },
   "keywords": [
-    "tezos",
-    "acurast",
+    "peaq",
+    "acelon",
     "blockchain",
-    "stxtz",
-    "taquito"
+    "scripts",
+    "ethers"
   ],
   "license": "MIT",
   "scripts": {

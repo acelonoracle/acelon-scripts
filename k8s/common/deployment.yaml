@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: __PROJECT_NAME__
+    namespace: __NAMESPACE_NAME__
+    labels:
+        app: __PROJECT_NAME__
+spec:
+    selector:
+        matchLabels:
+            app: __PROJECT_NAME__
+    replicas: 1
+    revisionHistoryLimit: 3
+    strategy:
+        type: RollingUpdate
+        rollingUpdate:
+            maxUnavailable: 1
+    template:
+        metadata:
+            labels:
+                app: __PROJECT_NAME__
+        spec:
+            containers:
+                - name: __PROJECT_NAME__
+                  image: __TO_BE_REPLACED_BY_IMAGE_TAG__
+                  imagePullPolicy: IfNotPresent
+                  envFrom:
+                      - configMapRef:
+                            name: __PROJECT_NAME__-config-map
+                      - secretRef:
+                          name: __PROJECT_NAME__-secret
+            restartPolicy: Always
