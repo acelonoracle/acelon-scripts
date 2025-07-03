@@ -20,12 +20,12 @@ export const PRICE_FEED_CONTRACT =
   PRICE_FEED_CONTRACTS[NETWORK as keyof typeof PRICE_FEED_CONTRACTS] || PRICE_FEED_CONTRACTS.testnet
 
 export const GAS_LIMITS = {
-  gasLimit: process.env.GAS_LIMIT || '10000000',
-  maxFeePerGas: process.env.MAX_FEE_PER_GAS || '1000000001',
-  maxPriorityFeePerGas: process.env.MAX_PRIORITY_FEE_PER_GAS || '1000000000',
+  gasLimit: process.env.GAS_LIMIT || '500000',
+  maxFeePerGas: process.env.MAX_FEE_PER_GAS || '200000000000',
+  maxPriorityFeePerGas: process.env.MAX_PRIORITY_FEE_PER_GAS || '200000000000',
 } as const
 
-// Single oracle configuration for all pairs
+// Single oracle configuration for all paizrs
 export const ORACLES = [
   '0x03983bfd1f13a213e562a96017bbf4b5a16dd424db99ca121042577a455e44c4ff',
   '0x0261a85c12f745704dee9d0b0fe9860f9728f95b96f96becd565148997fbb70370',
