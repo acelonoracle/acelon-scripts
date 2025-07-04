@@ -1,5 +1,37 @@
 # Acelon Scripts
 
+## Troubleshooting
+
+### Monitoring and Logs
+
+The bots are deployed on Google Cloud Kubernetes under the namespace "acelon-scripts". You can check the logs for problems here:
+
+**Google Cloud Console**: [Kubernetes Workloads](https://console.cloud.google.com/kubernetes/workload/overview?inv=1&invt=Ab13Ew&project=papers-kubernetes&pageState=(%22savedViews%22:(%22n%22:%5B%22acelon-scripts%22,%22peaq-scripts%22%5D)))
+
+### Most Common Issues
+
+#### 1. Out of Funds
+**Symptom**: Transactions failing/not being submitted (check error in logs)
+**Solution**: Check the balance of the bot address `0x2607e6A33c35E2526449eb0ff90D6A26aaCa1227`
+- Ensure the wallet has sufficient native tokens for gas fees
+- Monitor balance regularly and top up when needed
+
+#### 2. Certificates Changed
+**Symptom**: Transactions are reverted on the contract
+**Solution**: Update certificates on the contracts
+- Check if oracle certificates have been rotated
+- Update the oracle public keys in the contract configuration
+- Verify certificate validity and expiration dates
+
+#### 3. Price Threshold Exceeded (0.1% threshold)
+**Symptom**: Error messages in logs like:
+```
+❌ Invalid response: PEAQ-USDT - median : {"median":"7670000"}
+```
+**Cause**: Price difference between sources exceeds the 0.1% threshold
+**Solutions**:
+- No real quick solution (depends on the volatiliy of the price on different exchanges).
+
 ## Core Modules
 
 ### `types.ts`
