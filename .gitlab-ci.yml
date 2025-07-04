@@ -48,7 +48,14 @@ publish-dev:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
   before_script:
-    - echo $GCLOUD_GOOGLE_KEY_DEV | base64 -d > ${HOME}/gcloud-service-key.json
+    - |
+      if echo "$GCLOUD_GOOGLE_KEY_DEV" | head -c1 | grep -q "{"; then
+        # Variable is already JSON, use directly
+        echo "$GCLOUD_GOOGLE_KEY_DEV" > ${HOME}/gcloud-service-key.json
+      else
+        # Variable is base64 encoded, decode it
+        echo "$GCLOUD_GOOGLE_KEY_DEV" | base64 -d > ${HOME}/gcloud-service-key.json
+      fi
     - gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
     - gcloud config set project $GCLOUD_PROJECT_DEV
     - gcloud auth configure-docker --quiet
@@ -71,7 +78,14 @@ publish-prod:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
   before_script:
-    - echo $GCLOUD_GOOGLE_KEY | base64 -d > ${HOME}/gcloud-service-key.json
+    - |
+      if echo "$GCLOUD_GOOGLE_KEY" | head -c1 | grep -q "{"; then
+        # Variable is already JSON, use directly
+        echo "$GCLOUD_GOOGLE_KEY" > ${HOME}/gcloud-service-key.json
+      else
+        # Variable is base64 encoded, decode it
+        echo "$GCLOUD_GOOGLE_KEY" | base64 -d > ${HOME}/gcloud-service-key.json
+      fi
     - gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
     - gcloud config set project $GCLOUD_PROJECT
     - gcloud auth configure-docker --quiet
