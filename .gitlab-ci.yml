@@ -154,14 +154,13 @@ publish-prod-mainnet:
 # Development deploy jobs - matrix for all script/network combinations
 deploy-dev-testnet:
   stage: deploy
-  extends: .deploy-dev
+  extends: 
+    - .base_deployment
+    - .run_dev_rules
   when: manual
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
-  variables:
-    NETWORK: "testnet"
-    IMAGE_TAG: $GOOGLE_TAG_DEV-$SCRIPT_NAME-$NETWORK
   needs:
     - job: publish-dev-testnet
       parallel:
@@ -172,14 +171,13 @@ deploy-dev-testnet:
 
 deploy-dev-mainnet:
   stage: deploy
-  extends: .deploy-dev
+  extends: 
+    - .base_deployment
+    - .run_dev_rules
   when: manual
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
-  variables:
-    NETWORK: "mainnet"
-    IMAGE_TAG: $GOOGLE_TAG_DEV-$SCRIPT_NAME-$NETWORK
   needs:
     - job: publish-dev-mainnet
       parallel:
@@ -191,14 +189,13 @@ deploy-dev-mainnet:
 # Production deploy jobs - matrix for all script/network combinations
 deploy-prod-testnet:
   stage: deploy
-  extends: .deploy-prod
+  extends: 
+    - .base_deployment
+    - .run_prod_rules
   when: manual
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
-  variables:
-    NETWORK: "testnet"
-    IMAGE_TAG: $GOOGLE_TAG-$SCRIPT_NAME-$NETWORK
   needs:
     - job: publish-prod-testnet
       parallel:
@@ -209,14 +206,13 @@ deploy-prod-testnet:
 
 deploy-prod-mainnet:
   stage: deploy
-  extends: .deploy-prod
+  extends: 
+    - .base_deployment
+    - .run_prod_rules
   when: manual
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
-  variables:
-    NETWORK: "mainnet"
-    IMAGE_TAG: $GOOGLE_TAG-$SCRIPT_NAME-$NETWORK
   needs:
     - job: publish-prod-mainnet
       parallel:
@@ -237,7 +233,9 @@ deploy-prod-mainnet:
     - kubectl apply -f k8s/common/ --recursive
 
 .deploy-dev-testnet:
-  extends: .base_deployment
+  extends: 
+    - .base_deployment
+    - .run_dev_rules
   variables:
     NETWORK: "testnet"
     IMAGE_TAG: $GOOGLE_TAG_DEV-$SCRIPT_NAME-$NETWORK
@@ -245,7 +243,9 @@ deploy-prod-mainnet:
     name: development
 
 .deploy-dev-mainnet:
-  extends: .base_deployment
+  extends: 
+    - .base_deployment
+    - .run_dev_rules
   variables:
     NETWORK: "mainnet"
     IMAGE_TAG: $GOOGLE_TAG_DEV-$SCRIPT_NAME-$NETWORK
@@ -253,7 +253,9 @@ deploy-prod-mainnet:
     name: development
 
 .deploy-prod-testnet:
-  extends: .base_deployment
+  extends: 
+    - .base_deployment
+    - .run_prod_rules
   variables:
     NETWORK: "testnet"
     IMAGE_TAG: $GOOGLE_TAG-$SCRIPT_NAME-$NETWORK
@@ -261,7 +263,9 @@ deploy-prod-mainnet:
     name: production
 
 .deploy-prod-mainnet:
-  extends: .base_deployment
+  extends: 
+    - .base_deployment
+    - .run_prod_rules
   variables:
     NETWORK: "mainnet"
     IMAGE_TAG: $GOOGLE_TAG-$SCRIPT_NAME-$NETWORK
