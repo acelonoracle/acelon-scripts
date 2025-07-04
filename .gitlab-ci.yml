@@ -43,63 +43,41 @@ build-prod:
 
 # Development publish jobs - matrix for all scripts
 publish-dev:
+  extends: .publish-dev
   stage: publish
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
-  before_script:
-    - |
-      if echo "$GCLOUD_GOOGLE_KEY_DEV" | head -c1 | grep -q "{"; then
-        # Variable is already JSON, use directly
-        echo "$GCLOUD_GOOGLE_KEY_DEV" > ${HOME}/gcloud-service-key.json
-      else
-        # Variable is base64 encoded, decode it
-        echo "$GCLOUD_GOOGLE_KEY_DEV" | base64 -d > ${HOME}/gcloud-service-key.json
-      fi
-    - gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
-    - gcloud config set project $GCLOUD_PROJECT_DEV
-    - gcloud auth configure-docker --quiet
   script:
     - echo "Publishing $SCRIPT_NAME development image"
-    - docker tag $GOOGLE_TAG-development-$SCRIPT_NAME $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-$SCRIPT_NAME
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-$SCRIPT_NAME
+    - docker tag $GOOGLE_TAG-development-$SCRIPT_NAME $GOOGLE_TAG_DEV-$SCRIPT_NAME
+    - docker tag $GOOGLE_TAG-development-$SCRIPT_NAME $GOOGLE_TAG_LATEST_DEV-$SCRIPT_NAME
+    - docker push $GOOGLE_TAG_DEV-$SCRIPT_NAME
+    - docker push $GOOGLE_TAG_LATEST_DEV-$SCRIPT_NAME
   needs:
     - job: build-dev
       parallel:
         matrix:
           - SCRIPT_NAME: ["peaq", "etherlink"]
-  environment:
-    name: development
 
 # Production publish jobs - matrix for all scripts
 publish-prod:
+  extends: .publish-prod
   stage: publish
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
-  before_script:
-    - |
-      if echo "$GCLOUD_GOOGLE_KEY" | head -c1 | grep -q "{"; then
-        # Variable is already JSON, use directly
-        echo "$GCLOUD_GOOGLE_KEY" > ${HOME}/gcloud-service-key.json
-      else
-        # Variable is base64 encoded, decode it
-        echo "$GCLOUD_GOOGLE_KEY" | base64 -d > ${HOME}/gcloud-service-key.json
-      fi
-    - gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
-    - gcloud config set project $GCLOUD_PROJECT
-    - gcloud auth configure-docker --quiet
   script:
     - echo "Publishing $SCRIPT_NAME production image"
-    - docker tag $GOOGLE_TAG-production-$SCRIPT_NAME $GOOGLE_TAG-production-$SCRIPT_NAME
-    - docker push $GOOGLE_TAG-production-$SCRIPT_NAME
+    - docker tag $GOOGLE_TAG-production-$SCRIPT_NAME $GOOGLE_TAG-$SCRIPT_NAME
+    - docker tag $GOOGLE_TAG-production-$SCRIPT_NAME $GOOGLE_TAG_LATEST-$SCRIPT_NAME
+    - docker push $GOOGLE_TAG-$SCRIPT_NAME
+    - docker push $GOOGLE_TAG_LATEST-$SCRIPT_NAME
   needs:
     - job: build-prod
       parallel:
         matrix:
           - SCRIPT_NAME: ["peaq", "etherlink"]
-  environment:
-    name: production
 
 # Development deploy jobs - matrix for all scripts
 deploy-dev:
