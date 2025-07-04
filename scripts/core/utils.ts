@@ -85,16 +85,21 @@ export function log(message: any, type: 'default' | 'warn' | 'error' = 'default'
   }
 }
 
-export async function sendHeartbeatUptimeKuma(fulfillCount: number, environment: string = 'unknown') {
-  const heartbeatUrl = `https://uptime.papers.tech/api/push/kVvz3dwPQt?status=up&msg=${environment}FulfillingOK&ping=${fulfillCount}`
+export async function sendHeartbeatUptimeKuma(key: string, fulfillCount: number, environment: string = 'unknown') {
+  if (!key || key.trim() === '') {
+    log('⚠️ UptimeKuma key not provided, skipping heartbeat', 'warn')
+    return
+  }
+
+  const heartbeatUrl = `https://uptime.papers.tech/api/push/${key}?status=up&msg=${environment}FulfillingOK&ping=${fulfillCount}`
   try {
     const response = await fetch(heartbeatUrl, { method: 'GET' })
     if (response.ok) {
-      console.log('💚 UptimeKuma heartbeat sent successfully')
+      log('💚 UptimeKuma heartbeat sent successfully')
     } else {
-      console.error('❌ Failed to send UptimeKuma heartbeat')
+      log('❌ Failed to send UptimeKuma heartbeat', 'error')
     }
   } catch (error) {
-    console.error('🚨 Error sending heartbeat:', error)
+    log(`🚨 Error sending heartbeat: ${error}`, 'error')
   }
 } 

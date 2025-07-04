@@ -1,6 +1,6 @@
 import { Interface, Wallet } from 'ethers'
 import { log, sendHeartbeatUptimeKuma } from './utils'
-import { NetworkConfig } from './types'
+import { EnvironmentConfig } from './types'
 
 // ABI for the updatePriceFeeds function
 const PRICE_FEED_ABI = ['function updatePriceFeeds(bytes[] updateData, bytes[][] signature)']
@@ -45,7 +45,7 @@ export function encodeUpdatePriceFeedsPayload(
 /**
  * Calls the price feed contract to update price data using ethers
  * @param wallet The ethers wallet instance to use for signing
- * @param networkConfig The network configuration
+ * @param config The full environment configuration (includes network config and uptimeKumaKey)
  * @param packedDataArray Array of packed price data
  * @param signaturesArray Array of signature arrays for validation
  * @param nonce Optional nonce for the transaction (if not provided, will fetch from network)
@@ -53,12 +53,13 @@ export function encodeUpdatePriceFeedsPayload(
  */
 export async function callUpdatePriceFeeds(
   wallet: Wallet,
-  networkConfig: NetworkConfig,
+  config: EnvironmentConfig,
   packedDataArray: string[],
   signaturesArray: string[][],
   nonce?: number
 ): Promise<string> {
   try {
+    const networkConfig = config.network
     log(`🔗 Preparing ${networkConfig.name} transaction for ${packedDataArray.length} price entries with nonce: ${nonce}`)
 
     // Encode the transaction data
@@ -94,9 +95,9 @@ export async function callUpdatePriceFeeds(
     const receipt = await tx.wait()
     log(`✅ Transaction confirmed in block ${receipt?.blockNumber}`)
 
-    // Send heartbeat for mainnet environments
-    if (networkConfig.name.includes('mainnet')) {
-      sendHeartbeatUptimeKuma(1, networkConfig.name)
+    // Send heartbeat for mainnet environments if UptimeKuma key is available
+    if (networkConfig.name.includes('mainnet') && config.uptimeKumaKey) {
+      sendHeartbeatUptimeKuma(config.uptimeKumaKey, 1, networkConfig.name)
     }
 
     return tx.hash

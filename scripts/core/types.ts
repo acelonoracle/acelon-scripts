@@ -26,6 +26,7 @@ export interface EnvironmentConfig {
   pairs: PairConfig[]
   windowIntervalMs: number
   privateKey?: string
+  uptimeKumaKey?: string
 }
 
 // Base configuration structure for better organization

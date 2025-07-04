@@ -62,7 +62,7 @@ async function runMainLoop(
       // Call the contract with all price data in a single transaction
       const txHash = await callUpdatePriceFeeds(
         wallet,
-        config.network,
+        config,
         packedDataArray,
         signaturesArray
       )
