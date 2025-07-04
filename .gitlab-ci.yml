@@ -161,6 +161,9 @@ deploy-dev-testnet:
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
+  variables:
+    NETWORK: "testnet"
+    IMAGE_TAG: $GOOGLE_TAG_DEV-$SCRIPT_NAME-$NETWORK
   needs:
     - job: publish-dev-testnet
       parallel:
@@ -178,6 +181,9 @@ deploy-dev-mainnet:
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
+  variables:
+    NETWORK: "mainnet"
+    IMAGE_TAG: $GOOGLE_TAG_DEV-$SCRIPT_NAME-$NETWORK
   needs:
     - job: publish-dev-mainnet
       parallel:
@@ -196,6 +202,9 @@ deploy-prod-testnet:
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
+  variables:
+    NETWORK: "testnet"
+    IMAGE_TAG: $GOOGLE_TAG-$SCRIPT_NAME-$NETWORK
   needs:
     - job: publish-prod-testnet
       parallel:
@@ -213,6 +222,9 @@ deploy-prod-mainnet:
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
+  variables:
+    NETWORK: "mainnet"
+    IMAGE_TAG: $GOOGLE_TAG-$SCRIPT_NAME-$NETWORK
   needs:
     - job: publish-prod-mainnet
       parallel:
