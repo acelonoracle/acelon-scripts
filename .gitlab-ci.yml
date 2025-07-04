@@ -47,6 +47,11 @@ publish-dev:
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
+  before_script:
+    - echo $GCLOUD_GOOGLE_KEY_DEV | base64 -d > ${HOME}/gcloud-service-key.json
+    - gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
+    - gcloud config set project $GCLOUD_PROJECT_DEV
+    - gcloud auth configure-docker --quiet
   script:
     - echo "Publishing $SCRIPT_NAME development image"
     - docker tag $GOOGLE_TAG-development-$SCRIPT_NAME $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-$SCRIPT_NAME
@@ -65,6 +70,11 @@ publish-prod:
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
+  before_script:
+    - echo $GCLOUD_GOOGLE_KEY | base64 -d > ${HOME}/gcloud-service-key.json
+    - gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
+    - gcloud config set project $GCLOUD_PROJECT
+    - gcloud auth configure-docker --quiet
   script:
     - echo "Publishing $SCRIPT_NAME production image"
     - docker tag $GOOGLE_TAG-production-$SCRIPT_NAME $GOOGLE_TAG-production-$SCRIPT_NAME
