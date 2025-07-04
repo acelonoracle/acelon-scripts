@@ -4,15 +4,19 @@ include:
 
 variables:
   TEST_TAG: $CI_PROJECT_NAME:test_$CI_COMMIT_SHA
-  NETWORK: "mainnet"
+  NAMESPACE: "acelon-scripts"
 
 stages:
   - build
   - publish
   - deploy
 
-# Development builds - matrix for all scripts
-build-dev:
+.base_build:
+  script:
+    - docker build -f Dockerfile.$SCRIPT_NAME -t $GOOGLE_TAG-$CI_ENVIRONMENT_NAME-$SCRIPT_NAME-$NETWORK --build-arg environment=$NETWORK .
+
+# Development builds - matrix for all script/network combinations
+build-dev-testnet:
   stage: build
   variables:
     NETWORK: "testnet"
@@ -20,14 +24,12 @@ build-dev:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
   script:
-    - echo "Building $SCRIPT_NAME script for development"
-    - docker build -f Dockerfile.$SCRIPT_NAME -t $GOOGLE_TAG-development-$SCRIPT_NAME .
+    - !reference [.base_build, script]
   environment:
     name: development
     action: prepare
 
-# Production builds - matrix for all scripts
-build-prod:
+build-dev-mainnet:
   stage: build
   variables:
     NETWORK: "mainnet"
@@ -35,78 +37,176 @@ build-prod:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
   script:
-    - echo "Building $SCRIPT_NAME script for production"
-    - docker build -f Dockerfile.$SCRIPT_NAME -t $GOOGLE_TAG-production-$SCRIPT_NAME .
+    - !reference [.base_build, script]
+  environment:
+    name: development
+    action: prepare
+
+# Production builds - matrix for all script/network combinations
+build-prod-testnet:
+  stage: build
+  variables:
+    NETWORK: "testnet"
+  parallel:
+    matrix:
+      - SCRIPT_NAME: ["peaq", "etherlink"]
+  script:
+    - !reference [.base_build, script]
   environment:
     name: production
     action: prepare
 
-# Development publish jobs - matrix for all scripts
-publish-dev:
+build-prod-mainnet:
+  stage: build
+  variables:
+    NETWORK: "mainnet"
+  parallel:
+    matrix:
+      - SCRIPT_NAME: ["peaq", "etherlink"]
+  script:
+    - !reference [.base_build, script]
+  environment:
+    name: production
+    action: prepare
+
+# Development publish jobs - matrix for all script/network combinations
+publish-dev-testnet:
   extends: .publish-dev
   stage: publish
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
+  variables:
+    NETWORK: "testnet"
   script:
-    - echo "Publishing $SCRIPT_NAME development image"
-    - docker tag $GOOGLE_TAG-development-$SCRIPT_NAME $GOOGLE_TAG_DEV-$SCRIPT_NAME
-    - docker tag $GOOGLE_TAG-development-$SCRIPT_NAME $GOOGLE_TAG_LATEST_DEV-$SCRIPT_NAME
-    - docker push $GOOGLE_TAG_DEV-$SCRIPT_NAME
-    - docker push $GOOGLE_TAG_LATEST_DEV-$SCRIPT_NAME
+    - echo "Publishing $SCRIPT_NAME-$NETWORK development image"
+    - docker tag $GOOGLE_TAG-development-$SCRIPT_NAME-$NETWORK $GOOGLE_TAG_DEV-$SCRIPT_NAME-$NETWORK
+    - docker tag $GOOGLE_TAG-development-$SCRIPT_NAME-$NETWORK $GOOGLE_TAG_LATEST_DEV-$SCRIPT_NAME-$NETWORK
+    - docker push $GOOGLE_TAG_DEV-$SCRIPT_NAME-$NETWORK
+    - docker push $GOOGLE_TAG_LATEST_DEV-$SCRIPT_NAME-$NETWORK
   needs:
-    - job: build-dev
+    - job: build-dev-testnet
       parallel:
         matrix:
           - SCRIPT_NAME: ["peaq", "etherlink"]
 
-# Production publish jobs - matrix for all scripts
-publish-prod:
+publish-dev-mainnet:
+  extends: .publish-dev
+  stage: publish
+  parallel:
+    matrix:
+      - SCRIPT_NAME: ["peaq", "etherlink"]
+  variables:
+    NETWORK: "mainnet"
+  script:
+    - echo "Publishing $SCRIPT_NAME-$NETWORK development image"
+    - docker tag $GOOGLE_TAG-development-$SCRIPT_NAME-$NETWORK $GOOGLE_TAG_DEV-$SCRIPT_NAME-$NETWORK
+    - docker tag $GOOGLE_TAG-development-$SCRIPT_NAME-$NETWORK $GOOGLE_TAG_LATEST_DEV-$SCRIPT_NAME-$NETWORK
+    - docker push $GOOGLE_TAG_DEV-$SCRIPT_NAME-$NETWORK
+    - docker push $GOOGLE_TAG_LATEST_DEV-$SCRIPT_NAME-$NETWORK
+  needs:
+    - job: build-dev-mainnet
+      parallel:
+        matrix:
+          - SCRIPT_NAME: ["peaq", "etherlink"]
+
+# Production publish jobs - matrix for all script/network combinations
+publish-prod-testnet:
   extends: .publish-prod
   stage: publish
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
+  variables:
+    NETWORK: "testnet"
   script:
-    - echo "Publishing $SCRIPT_NAME production image"
-    - docker tag $GOOGLE_TAG-production-$SCRIPT_NAME $GOOGLE_TAG-$SCRIPT_NAME
-    - docker tag $GOOGLE_TAG-production-$SCRIPT_NAME $GOOGLE_TAG_LATEST-$SCRIPT_NAME
-    - docker push $GOOGLE_TAG-$SCRIPT_NAME
-    - docker push $GOOGLE_TAG_LATEST-$SCRIPT_NAME
+    - echo "Publishing $SCRIPT_NAME-$NETWORK production image"
+    - docker tag $GOOGLE_TAG-production-$SCRIPT_NAME-$NETWORK $GOOGLE_TAG-$SCRIPT_NAME-$NETWORK
+    - docker tag $GOOGLE_TAG-production-$SCRIPT_NAME-$NETWORK $GOOGLE_TAG_LATEST-$SCRIPT_NAME-$NETWORK
+    - docker push $GOOGLE_TAG-$SCRIPT_NAME-$NETWORK
+    - docker push $GOOGLE_TAG_LATEST-$SCRIPT_NAME-$NETWORK
   needs:
-    - job: build-prod
+    - job: build-prod-testnet
       parallel:
         matrix:
           - SCRIPT_NAME: ["peaq", "etherlink"]
 
-# Development deploy jobs - matrix for all scripts
-deploy-dev:
+publish-prod-mainnet:
+  extends: .publish-prod
+  stage: publish
+  parallel:
+    matrix:
+      - SCRIPT_NAME: ["peaq", "etherlink"]
+  variables:
+    NETWORK: "mainnet"
+  script:
+    - echo "Publishing $SCRIPT_NAME-$NETWORK production image"
+    - docker tag $GOOGLE_TAG-production-$SCRIPT_NAME-$NETWORK $GOOGLE_TAG-$SCRIPT_NAME-$NETWORK
+    - docker tag $GOOGLE_TAG-production-$SCRIPT_NAME-$NETWORK $GOOGLE_TAG_LATEST-$SCRIPT_NAME-$NETWORK
+    - docker push $GOOGLE_TAG-$SCRIPT_NAME-$NETWORK
+    - docker push $GOOGLE_TAG_LATEST-$SCRIPT_NAME-$NETWORK
+  needs:
+    - job: build-prod-mainnet
+      parallel:
+        matrix:
+          - SCRIPT_NAME: ["peaq", "etherlink"]
+
+# Development deploy jobs - matrix for all script/network combinations
+deploy-dev-testnet:
   stage: deploy
-  extends: .deploy-dev
-  image: google/cloud-sdk
+  extends: .deploy-dev-testnet
   when: manual
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
   needs:
-    - job: publish-dev
+    - job: publish-dev-testnet
       parallel:
         matrix:
           - SCRIPT_NAME: ["peaq", "etherlink"]
   environment:
     name: development
 
-# Production deploy jobs - matrix for all scripts  
-deploy-prod:
+deploy-dev-mainnet:
   stage: deploy
-  extends: .deploy-prod
-  image: google/cloud-sdk
+  extends: .deploy-dev-mainnet
   when: manual
   parallel:
     matrix:
       - SCRIPT_NAME: ["peaq", "etherlink"]
   needs:
-    - job: publish-prod
+    - job: publish-dev-mainnet
+      parallel:
+        matrix:
+          - SCRIPT_NAME: ["peaq", "etherlink"]
+  environment:
+    name: development
+
+# Production deploy jobs - matrix for all script/network combinations
+deploy-prod-testnet:
+  stage: deploy
+  extends: .deploy-prod-testnet
+  when: manual
+  parallel:
+    matrix:
+      - SCRIPT_NAME: ["peaq", "etherlink"]
+  needs:
+    - job: publish-prod-testnet
+      parallel:
+        matrix:
+          - SCRIPT_NAME: ["peaq", "etherlink"]
+  environment:
+    name: production
+
+deploy-prod-mainnet:
+  stage: deploy
+  extends: .deploy-prod-mainnet
+  when: manual
+  parallel:
+    matrix:
+      - SCRIPT_NAME: ["peaq", "etherlink"]
+  needs:
+    - job: publish-prod-mainnet
       parallel:
         matrix:
           - SCRIPT_NAME: ["peaq", "etherlink"]
@@ -115,17 +215,8 @@ deploy-prod:
 
 .base_deployment:
   script:
-    - |
-      # Set namespace based on script name
-      if [ "$SCRIPT_NAME" = "peaq" ]; then
-        export NAMESPACE="peaq-scripts"
-      elif [ "$SCRIPT_NAME" = "etherlink" ]; then
-        export NAMESPACE="etherlink-scripts"
-      else
-        export NAMESPACE="$SCRIPT_NAME-scripts"
-      fi
     - find k8s -type f -name \*.yaml -exec sed -i "s|__NAMESPACE_NAME__|"$NAMESPACE"|g" {} +
-    - find k8s -type f -name \*.yaml -exec sed -i "s|__PROJECT_NAME__|"$CI_PROJECT_NAME-$SCRIPT_NAME"|g" {} +
+    - find k8s -type f -name \*.yaml -exec sed -i "s|__PROJECT_NAME__|"$CI_PROJECT_NAME-$SCRIPT_NAME-$NETWORK"|g" {} +
     - find k8s -type f -name \*.yaml -exec sed -i "s|__TO_BE_REPLACED_BY_IMAGE_TAG__|"$IMAGE_TAG"|g" {} +
     - find k8s -type f -name \*.yaml -exec sed -i "s|__NETWORK__|"$NETWORK"|g" {} +
 
@@ -133,16 +224,34 @@ deploy-prod:
     - kubectl apply -f k8s/common/namespace.yaml
     - kubectl apply -f k8s/common/ --recursive
 
-.deploy-dev:
+.deploy-dev-testnet:
   extends: .base_deployment
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-$SCRIPT_NAME
+    NETWORK: "testnet"
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/$SCRIPT_NAME-$NETWORK:$CI_COMMIT_SHA
   environment:
     name: development
 
-.deploy-prod:
+.deploy-dev-mainnet:
   extends: .base_deployment
   variables:
-    IMAGE_TAG: $GOOGLE_TAG-production-$SCRIPT_NAME
+    NETWORK: "mainnet"
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/$SCRIPT_NAME-$NETWORK:$CI_COMMIT_SHA
+  environment:
+    name: development
+
+.deploy-prod-testnet:
+  extends: .base_deployment
+  variables:
+    NETWORK: "testnet"
+    IMAGE_TAG: $GOOGLE_TAG-production-$SCRIPT_NAME-$NETWORK
+  environment:
+    name: production
+
+.deploy-prod-mainnet:
+  extends: .base_deployment
+  variables:
+    NETWORK: "mainnet"
+    IMAGE_TAG: $GOOGLE_TAG-production-$SCRIPT_NAME-$NETWORK
   environment:
     name: production
