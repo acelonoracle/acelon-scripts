@@ -2,7 +2,7 @@
   "name": "acelon-scripts",
   "version": "1.0.0",
   "author": "",
-  "main": "dist/stxtz/index.js",
+  "main": "dist/index.js",
   "devDependencies": {
     "@types/node": "^24.0.4",
     "prettier": "^3.0.0",
@@ -21,11 +21,11 @@
   ],
   "license": "MIT",
   "scripts": {
-    "build:stxtz": "NODE_ENV=production bun build scripts/stxtz/index.ts --outdir dist/stxtz --target node --minify --format cjs",
+    "build:etherlink": "NODE_ENV=production bun build scripts/etherlink/index.ts --outdir dist/etherlink --target node --minify --format cjs",
     "build:peaq": "NODE_ENV=production bun build scripts/peaq/index.ts --outdir dist/peaq --target node --minify --format cjs",
-    "start:stxtz": "bun run dist/stxtz/index.js",
+    "start:etherlink": "bun run dist/etherlink/index.js",
     "start:peaq": "bun run dist/peaq/index.js",
-    "dev:stxtz": "bun --watch scripts/stxtz/index.ts",
+    "dev:etherlink": "bun --watch scripts/etherlink/index.ts",
     "dev:peaq": "bun --watch scripts/peaq/index.ts",
     "clean": "rm -rf dist",
     "prebuild": "bun run clean",

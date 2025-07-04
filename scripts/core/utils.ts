@@ -1,7 +1,5 @@
-import { RPC_URLS } from './environment'
-
 /**
- * Checks if an Etherlink RPC endpoint is reachable
+ * Checks if an RPC endpoint is reachable
  * @param rpcUrl The RPC URL to check
  * @param timeout Timeout in milliseconds (default: 5000ms)
  * @returns Promise resolving to true if reachable, false otherwise
@@ -16,21 +14,21 @@ export async function isRpcReachable(rpcUrl: string, timeout: number = 5000): Pr
     // Attempt to fetch the latest block number using JSON-RPC
     const fetchPromise = fetch(rpcUrl, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Accept: 'application/json',
       },
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'eth_blockNumber',
         params: [],
-        id: 1
-      })
+        id: 1,
+      }),
     })
 
     // Race the fetch against the timeout
     const response = (await Promise.race([fetchPromise, timeoutPromise])) as Response
-    
+
     if (!response.ok) {
       return false
     }
@@ -46,22 +44,23 @@ export async function isRpcReachable(rpcUrl: string, timeout: number = 5000): Pr
 
 /**
  * Finds the first reachable RPC URL from a list of candidates
+ * @param rpcUrls Array of RPC URLs to check
  * @returns Promise resolving to the first reachable RPC URL or null if none found
  */
-export async function findReachableRpc(): Promise<string | null> {
-  if (!RPC_URLS || RPC_URLS.length === 0) {
+export async function findReachableRpc(rpcUrls: string[]): Promise<string | null> {
+  if (!rpcUrls || rpcUrls.length === 0) {
     log('❌ No RPC URLs provided to check', 'error')
     return null
   }
 
-  log(`🔍 Checking ${RPC_URLS.length} Etherlink RPC endpoints for reachability...`)
+  log(`🔍 Checking ${rpcUrls.length} RPC endpoints for reachability...`)
 
-  for (const url of RPC_URLS) {
+  for (const url of rpcUrls) {
     try {
       const reachable = await isRpcReachable(url)
 
       if (reachable) {
-        log(`✅ Found reachable Etherlink RPC: ${url}`)
+        log(`✅ Found reachable RPC: ${url}`)
         return url
       }
     } catch (error) {
@@ -69,7 +68,7 @@ export async function findReachableRpc(): Promise<string | null> {
     }
   }
 
-  log('❌ No reachable Etherlink RPC endpoints found', 'error')
+  log('❌ No reachable RPC endpoints found', 'error')
   return null
 }
 
@@ -80,9 +79,22 @@ export function log(message: any, type: 'default' | 'warn' | 'error' = 'default'
       break
     case 'error':
       console.error(message)
-      //logSentryPost(message)
       break
     default:
       console.log(message)
   }
 }
+
+export async function sendHeartbeatUptimeKuma(fulfillCount: number, environment: string = 'unknown') {
+  const heartbeatUrl = `https://uptime.papers.tech/api/push/kVvz3dwPQt?status=up&msg=${environment}FulfillingOK&ping=${fulfillCount}`
+  try {
+    const response = await fetch(heartbeatUrl, { method: 'GET' })
+    if (response.ok) {
+      console.log('💚 UptimeKuma heartbeat sent successfully')
+    } else {
+      console.error('❌ Failed to send UptimeKuma heartbeat')
+    }
+  } catch (error) {
+    console.error('🚨 Error sending heartbeat:', error)
+  }
+} 

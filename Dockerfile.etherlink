@@ -1,0 +1,31 @@
+FROM node:22-slim
+
+# Set Bun version
+ENV BUN_VERSION=1.2.17
+
+WORKDIR /app
+
+# Install Bun in the specified version
+RUN apt update && apt install -y bash curl unzip && \
+    curl https://bun.sh/install | bash -s -- bun-v${BUN_VERSION}
+
+# Add Bun to PATH
+ENV PATH="/root/.bun/bin:${PATH}"
+
+# Copy package files
+COPY package.json ./
+COPY bun.lock ./
+
+# Copy source code
+COPY scripts/ ./scripts/
+COPY tsconfig.json ./
+
+# Install dependencies and build using Bun
+RUN bun install
+RUN bun run build:etherlink
+
+# Set environment variables
+ENV NODE_ENV=production
+
+# Default command to run the etherlink script with Node.js
+CMD ["node", "dist/etherlink/index.js"] 

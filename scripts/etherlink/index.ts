@@ -1,13 +1,13 @@
 import { runMain } from '../core/main-loop'
-import { peaqConfig } from './config'
+import { etherlinkConfig } from './config'
 import { log } from '../core/utils'
 
 async function main() {
   try {
-    await runMain(peaqConfig)
+    await runMain(etherlinkConfig)
   } catch (error) {
     log(`❌ Main: unhandled error: ${error}`, 'error')
   }
 }
 
-main()
+main() 

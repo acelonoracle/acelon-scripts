@@ -1,8 +1,8 @@
 import { Interface, Wallet } from 'ethers'
 import { log, sendHeartbeatUptimeKuma } from './utils'
-import { GAS_LIMITS, NETWORK } from './environment'
+import { NetworkConfig } from './types'
 
-// ABI for the updatePriceFeeds function (same as stxtz)
+// ABI for the updatePriceFeeds function
 const PRICE_FEED_ABI = ['function updatePriceFeeds(bytes[] updateData, bytes[][] signature)']
 
 /**
@@ -39,16 +39,13 @@ export function encodeUpdatePriceFeedsPayload(
     signaturesArray.map(signatures => signatures.map(sig => ensure0xPrefix(sig))),
   ])
 
-  // log(`📋 Method signature: ${methodSignature}`)
-  // log(`🔗 Encoded data: ${encodedData}`)
-
   return { payload: encodedData, methodSignature }
 }
 
 /**
- * Calls the PEAQ price feed contract to update price data using ethers
+ * Calls the price feed contract to update price data using ethers
  * @param wallet The ethers wallet instance to use for signing
- * @param contractAddress The price feed contract address
+ * @param networkConfig The network configuration
  * @param packedDataArray Array of packed price data
  * @param signaturesArray Array of signature arrays for validation
  * @param nonce Optional nonce for the transaction (if not provided, will fetch from network)
@@ -56,13 +53,13 @@ export function encodeUpdatePriceFeedsPayload(
  */
 export async function callUpdatePriceFeeds(
   wallet: Wallet,
-  contractAddress: string,
+  networkConfig: NetworkConfig,
   packedDataArray: string[],
   signaturesArray: string[][],
   nonce?: number
 ): Promise<string> {
   try {
-    log(`🔗 Preparing PEAQ transaction for ${packedDataArray.length} price entries with nonce: ${nonce}`)
+    log(`🔗 Preparing ${networkConfig.name} transaction for ${packedDataArray.length} price entries with nonce: ${nonce}`)
 
     // Encode the transaction data
     const { payload } = encodeUpdatePriceFeedsPayload(packedDataArray, signaturesArray)
@@ -73,27 +70,21 @@ export async function callUpdatePriceFeeds(
       throw new Error('Wallet must have a provider')
     }
     const feeData = await provider.getFeeData()
-    // console.log(feeData)
-    
 
     // Get nonce if not provided
     const transactionNonce = nonce !== undefined ? nonce : await wallet.getNonce()
-    // log(`🔢 Using nonce: ${transactionNonce}`)
 
     // Prepare the transaction
     const transaction = {
-      to: contractAddress,
+      to: networkConfig.priceFeedContract,
       data: payload,
-      gasLimit: BigInt(GAS_LIMITS.gasLimit),
-      maxFeePerGas: feeData.maxFeePerGas || BigInt(GAS_LIMITS.maxFeePerGas),
-      maxPriorityFeePerGas: feeData.maxFeePerGas || BigInt(GAS_LIMITS.maxPriorityFeePerGas),
+      gasLimit: BigInt(networkConfig.gasLimits.gasLimit),
+      maxFeePerGas: feeData.maxFeePerGas || BigInt(networkConfig.gasLimits.maxFeePerGas),
+      maxPriorityFeePerGas: feeData.maxFeePerGas || BigInt(networkConfig.gasLimits.maxPriorityFeePerGas),
       nonce: transactionNonce,
     }
 
     log(`📝 Transaction prepared, nonce: ${transactionNonce}`)
-    // log(`⛽ Gas Limit: ${transaction.gasLimit.toString()}`)
-    // log(`💰 Max Fee Per Gas: ${transaction.maxFeePerGas?.toString()}`)
-    // log(`🎯 Max Priority Fee Per Gas: ${transaction.maxPriorityFeePerGas?.toString()}`)
 
     // Sign and send the transaction
     const tx = await wallet.sendTransaction(transaction)
@@ -103,12 +94,13 @@ export async function callUpdatePriceFeeds(
     const receipt = await tx.wait()
     log(`✅ Transaction confirmed in block ${receipt?.blockNumber}`)
 
-    if (NETWORK === 'mainnet') {
-      sendHeartbeatUptimeKuma(1)
+    // Send heartbeat for mainnet environments
+    if (networkConfig.name.includes('mainnet')) {
+      sendHeartbeatUptimeKuma(1, networkConfig.name)
     }
 
     return tx.hash
   } catch (error) {
     throw error
   }
-}
+} 
