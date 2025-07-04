@@ -2,26 +2,6 @@ include:
   - project: 'papers/papers-internal/internal'
     file: '/.base-gitlab-ci.yml'
 
-  # For development
-  - component: gitlab.papers.tech/papers/papers-internal/ci-cd-components/publish-local-registry@v0.0.44
-    inputs:
-      existing-tag: $GOOGLE_TAG-development-$SCRIPT_NAME
-      tag-to-publish: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-$SCRIPT_NAME
-  - component: gitlab.papers.tech/papers/papers-internal/ci-cd-components/deploy-self-hosted-dev@v0.0.44
-    inputs:
-      extends_script: .deploy-dev
-      environment: development
-
-  # For production
-  - component: gitlab.papers.tech/papers/papers-internal/ci-cd-components/k8s-publish-prod@v0.0.40
-    inputs:
-      existing-tag: $GOOGLE_TAG-production-$SCRIPT_NAME
-      tag-to-publish: $GOOGLE_TAG-production-$SCRIPT_NAME
-  - component: gitlab.papers.tech/papers/papers-internal/ci-cd-components/k8s-deploy-prod@v0.0.40
-    inputs:
-      extends_script: .deploy-prod
-      environment: production
-
 variables:
   TEST_TAG: $CI_PROJECT_NAME:test_$CI_COMMIT_SHA
   NETWORK: "mainnet"
@@ -60,6 +40,72 @@ build-prod:
   environment:
     name: production
     action: prepare
+
+# Development publish jobs - matrix for all scripts
+publish-dev:
+  stage: publish
+  parallel:
+    matrix:
+      - SCRIPT_NAME: ["peaq", "etherlink"]
+  script:
+    - echo "Publishing $SCRIPT_NAME development image"
+    - docker tag $GOOGLE_TAG-development-$SCRIPT_NAME $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-$SCRIPT_NAME
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-$SCRIPT_NAME
+  needs:
+    - job: build-dev
+      parallel:
+        matrix:
+          - SCRIPT_NAME: ["peaq", "etherlink"]
+  environment:
+    name: development
+
+# Production publish jobs - matrix for all scripts
+publish-prod:
+  stage: publish
+  parallel:
+    matrix:
+      - SCRIPT_NAME: ["peaq", "etherlink"]
+  script:
+    - echo "Publishing $SCRIPT_NAME production image"
+    - docker tag $GOOGLE_TAG-production-$SCRIPT_NAME $GOOGLE_TAG-production-$SCRIPT_NAME
+    - docker push $GOOGLE_TAG-production-$SCRIPT_NAME
+  needs:
+    - job: build-prod
+      parallel:
+        matrix:
+          - SCRIPT_NAME: ["peaq", "etherlink"]
+  environment:
+    name: production
+
+# Development deploy jobs - matrix for all scripts
+deploy-dev:
+  stage: deploy
+  extends: .deploy-dev
+  parallel:
+    matrix:
+      - SCRIPT_NAME: ["peaq", "etherlink"]
+  needs:
+    - job: publish-dev
+      parallel:
+        matrix:
+          - SCRIPT_NAME: ["peaq", "etherlink"]
+  environment:
+    name: development
+
+# Production deploy jobs - matrix for all scripts  
+deploy-prod:
+  stage: deploy
+  extends: .deploy-prod
+  parallel:
+    matrix:
+      - SCRIPT_NAME: ["peaq", "etherlink"]
+  needs:
+    - job: publish-prod
+      parallel:
+        matrix:
+          - SCRIPT_NAME: ["peaq", "etherlink"]
+  environment:
+    name: production
 
 .base_deployment:
   script:
