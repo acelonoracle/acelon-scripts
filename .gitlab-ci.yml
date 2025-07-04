@@ -5,8 +5,8 @@ include:
   # For development
   - component: gitlab.papers.tech/papers/papers-internal/ci-cd-components/publish-local-registry@v0.0.44
     inputs:
-      existing-tag: $GOOGLE_TAG-development
-      tag-to-publish: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+      existing-tag: $GOOGLE_TAG-development-$SCRIPT_NAME
+      tag-to-publish: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-$SCRIPT_NAME
   - component: gitlab.papers.tech/papers/papers-internal/ci-cd-components/deploy-self-hosted-dev@v0.0.44
     inputs:
       extends_script: .deploy-dev
@@ -15,8 +15,8 @@ include:
   # For production
   - component: gitlab.papers.tech/papers/papers-internal/ci-cd-components/k8s-publish-prod@v0.0.40
     inputs:
-      existing-tag: $GOOGLE_TAG-production
-      tag-to-publish: $GOOGLE_TAG-production
+      existing-tag: $GOOGLE_TAG-production-$SCRIPT_NAME
+      tag-to-publish: $GOOGLE_TAG-production-$SCRIPT_NAME
   - component: gitlab.papers.tech/papers/papers-internal/ci-cd-components/k8s-deploy-prod@v0.0.40
     inputs:
       extends_script: .deploy-prod
@@ -24,7 +24,6 @@ include:
 
 variables:
   TEST_TAG: $CI_PROJECT_NAME:test_$CI_COMMIT_SHA
-  NAMESPACE: peaq-scripts
   NETWORK: "mainnet"
 
 stages:
@@ -32,34 +31,49 @@ stages:
   - publish
   - deploy
 
-.base_build:
-  script:
-    - docker build -f Dockerfile.peaq -t $GOOGLE_TAG-$CI_ENVIRONMENT_NAME .
-
+# Development builds - matrix for all scripts
 build-dev:
   stage: build
   variables:
     NETWORK: "testnet"
+  parallel:
+    matrix:
+      - SCRIPT_NAME: ["peaq", "etherlink"]
   script:
-    - !reference [.base_build, script]
+    - echo "Building $SCRIPT_NAME script for development"
+    - docker build -f Dockerfile.$SCRIPT_NAME -t $GOOGLE_TAG-development-$SCRIPT_NAME .
   environment:
     name: development
     action: prepare
 
+# Production builds - matrix for all scripts
 build-prod:
   stage: build
   variables:
     NETWORK: "mainnet"
+  parallel:
+    matrix:
+      - SCRIPT_NAME: ["peaq", "etherlink"]
   script:
-    - !reference [.base_build, script]
+    - echo "Building $SCRIPT_NAME script for production"
+    - docker build -f Dockerfile.$SCRIPT_NAME -t $GOOGLE_TAG-production-$SCRIPT_NAME .
   environment:
     name: production
     action: prepare
 
 .base_deployment:
   script:
+    - |
+      # Set namespace based on script name
+      if [ "$SCRIPT_NAME" = "peaq" ]; then
+        export NAMESPACE="peaq-scripts"
+      elif [ "$SCRIPT_NAME" = "etherlink" ]; then
+        export NAMESPACE="etherlink-scripts"
+      else
+        export NAMESPACE="$SCRIPT_NAME-scripts"
+      fi
     - find k8s -type f -name \*.yaml -exec sed -i "s|__NAMESPACE_NAME__|"$NAMESPACE"|g" {} +
-    - find k8s -type f -name \*.yaml -exec sed -i "s|__PROJECT_NAME__|"$CI_PROJECT_NAME"|g" {} +
+    - find k8s -type f -name \*.yaml -exec sed -i "s|__PROJECT_NAME__|"$CI_PROJECT_NAME-$SCRIPT_NAME"|g" {} +
     - find k8s -type f -name \*.yaml -exec sed -i "s|__TO_BE_REPLACED_BY_IMAGE_TAG__|"$IMAGE_TAG"|g" {} +
     - find k8s -type f -name \*.yaml -exec sed -i "s|__NETWORK__|"$NETWORK"|g" {} +
 
@@ -70,13 +84,13 @@ build-prod:
 .deploy-dev:
   extends: .base_deployment
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-$SCRIPT_NAME
   environment:
     name: development
 
 .deploy-prod:
   extends: .base_deployment
   variables:
-    IMAGE_TAG: $GOOGLE_TAG-production
+    IMAGE_TAG: $GOOGLE_TAG-production-$SCRIPT_NAME
   environment:
     name: production
