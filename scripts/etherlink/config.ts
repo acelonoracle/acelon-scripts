@@ -20,7 +20,7 @@ const PRICE_FEED_CONTRACTS: Record<Network, string> = {
 }
 
 const PAIRS = [
-  { from: 'STXTZ', to: 'XTZ', decimals: 8, name: 'STXTZ/XTZ' },
+  { from: 'STXTZ', to: 'XTZ', decimals: 6, name: 'STXTZ/XTZ' },
 ]
 
 // Chain-specific gas limits
