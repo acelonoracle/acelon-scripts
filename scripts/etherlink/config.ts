@@ -46,6 +46,6 @@ export const etherlinkConfig: EnvironmentConfig = {
   },
   oracles: ORACLES,
   pairs: PAIRS,
-  windowIntervalMs: 30 * 1000, // 30 seconds
+  windowIntervalMs: 15 * 60 * 1000, // 15 minutes
   privateKey: PRIVATE_KEY,
 } 
