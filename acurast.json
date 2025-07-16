@@ -1,8 +1,8 @@
 {
   "projects": {
-    "stxtz": {
-      "projectName": "stxtz",
-      "fileUrl": "dist/stxtz/index.js",
+    "etherlink": {
+      "projectName": "etherlink",
+      "fileUrl": "dist/etherlink/index.js",
       "network": "canary",
       "startAt": {
         "msFromNow": 300000
@@ -32,8 +32,8 @@
       }
     },
     "testPixel5": {
-      "projectName": "stxtzTest",
-      "fileUrl": "dist/stxtz/index.js",
+      "projectName": "etherlinkTest",
+      "fileUrl": "dist/etherlink/index.js",
       "network": "canary",
       "startAt": {
         "msFromNow": 180000

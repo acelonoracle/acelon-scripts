@@ -46,6 +46,12 @@ export const etherlinkConfig: EnvironmentConfig = {
   },
   oracles: ORACLES,
   pairs: PAIRS,
-  windowIntervalMs: 15 * 60 * 1000, // 15 minutes
+  windowIntervalMs: 9 * 60 * 1000, // 9 minutes
   privateKey: PRIVATE_KEY,
+  // Optional retry configuration (disabled by default)
+  retry: {
+    enabled: true,
+    maxRetries: 3,
+    retryDelayMs: 2 * 60 * 1000, // 2 minutes
+  },
 } 

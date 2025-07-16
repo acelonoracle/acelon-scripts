@@ -20,6 +20,12 @@ export interface PairConfig {
   name: string
 }
 
+export interface RetryConfig {
+  enabled: boolean
+  maxRetries: number
+  retryDelayMs: number
+}
+
 export interface EnvironmentConfig {
   network: NetworkConfig
   oracles: string[]
@@ -27,6 +33,7 @@ export interface EnvironmentConfig {
   windowIntervalMs: number
   privateKey?: string
   uptimeKumaKey?: string
+  retry?: RetryConfig
 }
 
 // Base configuration structure for better organization
