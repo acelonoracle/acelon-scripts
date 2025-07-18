@@ -34,6 +34,7 @@ export interface EnvironmentConfig {
   privateKey?: string
   uptimeKumaKey?: string
   retry?: RetryConfig
+  sdkLogging?: boolean
 }
 
 // Base configuration structure for better organization

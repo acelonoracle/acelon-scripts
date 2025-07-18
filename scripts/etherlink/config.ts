@@ -54,4 +54,5 @@ export const etherlinkConfig: EnvironmentConfig = {
     maxRetries: 3,
     retryDelayMs: 2 * 60 * 1000, // 2 minutes
   },
+  sdkLogging: true
 } 
