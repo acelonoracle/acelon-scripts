@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: __PROJECT_NAME__-cronjob
+  namespace: __NAMESPACE_NAME__
+  labels:
+    app: __PROJECT_NAME__
+spec:
+  # Run every 10 minutes
+  schedule: "*/10 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 15
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      activeDeadlineSeconds: 60
+      template:
+        metadata:
+          labels:
+            app: __PROJECT_NAME__
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: __PROJECT_NAME__
+              image: __IMAGE_TAG__
+              imagePullPolicy: IfNotPresent
+              envFrom:
+                - configMapRef:
+                    name: __PROJECT_NAME__-config-map
+                - secretRef:
+                    name: __PROJECT_NAME__-secret
+              resources:
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: false 
