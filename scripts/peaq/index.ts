@@ -1,4 +1,4 @@
-import { runMain } from '../core/main-once'
+import { runMain } from '../core/main-loop'
 import { peaqConfig } from './config'
 import { log } from '../core/utils'
 

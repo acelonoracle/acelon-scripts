@@ -29,4 +29,4 @@ spec:
                             name: __PROJECT_NAME__-config-map
                       - secretRef:
                           name: __PROJECT_NAME__-secret
-            restartPolicy: Always
+            restartPolicy: Always 
