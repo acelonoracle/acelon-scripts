@@ -73,13 +73,18 @@ async function runMainLoop(
         const packedDataArray = prices.map(result => result.packed[0])
         const signaturesArray = prices.map(result => result.signatures)
 
-        // Call the contract with all price data in a single transaction
-        const txHash = await callUpdatePriceFeeds(
-          wallet,
-          config,
-          packedDataArray,
-          signaturesArray
-        )
+        // Call the contract with all price data in a single transaction with 30s timeout
+        const txHash = await Promise.race([
+          callUpdatePriceFeeds(
+            wallet,
+            config,
+            packedDataArray,
+            signaturesArray
+          ),
+          new Promise<never>((_, reject) => 
+            setTimeout(() => reject(new Error('callUpdatePriceFeeds timed out after 30 seconds')), 30000)
+          )
+        ])
 
         log(`✅ Successfully updated all ${prices.length} price feeds in batched transaction! Hash: ${txHash}`)
         success = true
