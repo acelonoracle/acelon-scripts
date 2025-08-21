@@ -1,5 +1,5 @@
 import { EnvironmentConfig, Network } from '../core/types'
-import { NETWORK, ORACLES, PRIVATE_KEY } from '../core/config'
+import { NETWORK, ORACLES, PRIVATE_KEY, WSS_URLS } from '../core/config'
 
 // Chain-specific RPC URLs
 const RPC_URLS: Record<Network, string[]> = {
@@ -45,6 +45,7 @@ export const etherlinkConfig: EnvironmentConfig = {
     gasLimits: GAS_LIMITS[NETWORK],
   },
   oracles: ORACLES,
+  wssUrls: WSS_URLS,
   pairs: PAIRS,
   windowIntervalMs: 9 * 60 * 1000, // 9 minutes
   privateKey: PRIVATE_KEY,

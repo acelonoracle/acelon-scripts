@@ -29,6 +29,7 @@ export interface RetryConfig {
 export interface EnvironmentConfig {
   network: NetworkConfig
   oracles: string[]
+  wssUrls: string[]
   pairs: PairConfig[]
   windowIntervalMs: number
   privateKey?: string

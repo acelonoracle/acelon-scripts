@@ -157,6 +157,7 @@ export async function runMain(config: EnvironmentConfig): Promise<void> {
   // Initialize AcelonSdk once
   const options: AcelonSdkOptions = {
     oracles: config.oracles,
+    wssUrls: config.wssUrls,
     logging: config.sdkLogging || false
   }
   const acelon = new AcelonSdk(options)
