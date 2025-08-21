@@ -17,10 +17,13 @@ services:
     security_opt:
       - no-new-privileges:true
     user: "1000:1000"
-    # Override default CMD to run as cron job every 10 minutes
+    # Run every 10 minutes using bash loop
     command: >
       sh -c "
-        echo '*/10 * * * * cd /app && node dist/etherlink/index.js' > /tmp/crontab &&
-        crontab /tmp/crontab &&
-        crond -f
+        while true; do
+          echo '[$(date)] Running etherlink script...'
+          node dist/etherlink/index.js
+          echo '[$(date)] Sleeping for 10 minutes...'
+          sleep 600
+        done
       "

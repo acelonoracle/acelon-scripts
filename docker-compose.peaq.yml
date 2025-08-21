@@ -17,10 +17,13 @@ services:
     security_opt:
       - no-new-privileges:true
     user: "1000:1000"
-    # Override default CMD to run as cron job every minute
+    # Run every minute using bash loop
     command: >
       sh -c "
-        echo '* * * * * cd /app && node dist/peaq/index.js' > /tmp/crontab &&
-        crontab /tmp/crontab &&
-        crond -f
+        while true; do
+          echo '[$(date)] Running peaq script...'
+          node dist/peaq/index.js
+          echo '[$(date)] Sleeping for 1 minute...'
+          sleep 60
+        done
       "
