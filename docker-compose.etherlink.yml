@@ -9,7 +9,7 @@ services:
     container_name: acelon-etherlink-cron
     environment:
       - NODE_ENV=production
-      - NETWORK=etherlink-mainnet
+      - NETWORK=mainnet
       - PRIVATE_KEY=${PRIVATE_KEY}
     restart: unless-stopped
     mem_limit: 512m
