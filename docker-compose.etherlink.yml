@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  etherlink-cron:
+    build:
+      context: .
+      dockerfile: Dockerfile.etherlink
+    image: acelon-scripts-etherlink:latest
+    container_name: acelon-etherlink-cron
+    environment:
+      - NODE_ENV=production
+      - NETWORK=etherlink-mainnet
+      - PRIVATE_KEY=${PRIVATE_KEY}
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: "0.5"
+    security_opt:
+      - no-new-privileges:true
+    user: "1000:1000"
+    # Override default CMD to run as cron job every 10 minutes
+    command: >
+      sh -c "
+        echo '*/10 * * * * cd /app && node dist/etherlink/index.js' > /tmp/crontab &&
+        crontab /tmp/crontab &&
+        crond -f
+      "
