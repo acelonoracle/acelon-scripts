@@ -3,7 +3,13 @@ import { NETWORK, ORACLES, PRIVATE_KEY, WSS_URLS } from '../core/config'
 
 // Chain-specific RPC URLs
 const RPC_URLS: Record<Network, string[]> = {
-  mainnet: ['https://peaq.api.onfinality.io/public', 'https://peaq-rpc.publicnode.com'],
+  mainnet: [
+    'https://quicknode1.peaq.xyz',
+    'https://quicknode2.peaq.xyz',
+    'https://quicknode3.peaq.xyz',
+    'https://peaq-rpc.publicnode.com',
+    'https://peaq.api.onfinality.io/public',
+  ],
   testnet: [
     'https://wss-async.agung.peaq.network',
     'https://peaq-agung-rpc.publicnode.com',
@@ -25,7 +31,10 @@ const PAIRS = [
 ]
 
 // Chain-specific gas limits
-const GAS_LIMITS: Record<Network, { gasLimit: string; maxFeePerGas: string; maxPriorityFeePerGas: string }> = {
+const GAS_LIMITS: Record<
+  Network,
+  { gasLimit: string; maxFeePerGas: string; maxPriorityFeePerGas: string }
+> = {
   mainnet: {
     gasLimit: '500000',
     maxFeePerGas: '200000000000',
@@ -50,5 +59,5 @@ export const peaqConfig: EnvironmentConfig = {
   pairs: PAIRS,
   windowIntervalMs: 30 * 1000, // 30 seconds
   privateKey: PRIVATE_KEY,
-  uptimeKumaKey:  'kVvz3dwPQt', 
-} 
+  uptimeKumaKey: 'kVvz3dwPQt',
+}

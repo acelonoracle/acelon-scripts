@@ -1,12 +1,13 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: __PROJECT_NAME__-cronjob
+  name: __PROJECT_NAME__-cronjob-1
   namespace: __NAMESPACE_NAME__
   labels:
     app: __PROJECT_NAME__
+    instance: "1"
 spec:
-  # Run every minute
+  # Run every minute (first instance)
   schedule: "* * * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
@@ -15,13 +16,68 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 3
-      activeDeadlineSeconds: 30
+      activeDeadlineSeconds: 60
       template:
         metadata:
           labels:
             app: __PROJECT_NAME__
+            instance: "1"
         spec:
           restartPolicy: OnFailure
+          containers:
+            - name: __PROJECT_NAME__
+              image: __IMAGE_TAG__
+              imagePullPolicy: IfNotPresent
+              envFrom:
+                - configMapRef:
+                    name: __PROJECT_NAME__-config-map
+                - secretRef:
+                    name: __PROJECT_NAME__-secret
+              resources:
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: false
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: __PROJECT_NAME__-cronjob-2
+  namespace: __NAMESPACE_NAME__
+  labels:
+    app: __PROJECT_NAME__
+    instance: "2"
+spec:
+  # Run every minute (second instance with 30s delay)
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 15
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      activeDeadlineSeconds: 60
+      template:
+        metadata:
+          labels:
+            app: __PROJECT_NAME__
+            instance: "2"
+        spec:
+          restartPolicy: OnFailure
+          initContainers:
+            - name: delay
+              image: busybox:1.35
+              command: ["sh", "-c", "sleep 30"]
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
           containers:
             - name: __PROJECT_NAME__
               image: __IMAGE_TAG__
