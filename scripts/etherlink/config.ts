@@ -5,6 +5,10 @@ import { NETWORK, ORACLES, PRIVATE_KEY, WSS_URLS } from '../core/config'
 const RPC_URLS: Record<Network, string[]> = {
   mainnet: [
     'https://node.mainnet.etherlink.com',
+    'https://rpc.ankr.com/etherlink_mainnet',
+    'https://42793.rpc.thirdweb.com',
+    'https://mainnet.etherlink.midl.dev/ak-hbqeq9ne5hmuv0',
+    'https://spectrum-01.simplystaking.xyz/cHprZWViemotMDEtMjExMGVmMGM/IaG9POlj879aJQ/etherlink/mainnet',
   ],
   testnet: [
     'https://node.ghostnet.etherlink.com',
