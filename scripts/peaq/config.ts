@@ -60,4 +60,5 @@ export const peaqConfig: EnvironmentConfig = {
   windowIntervalMs: 30 * 1000, // 30 seconds
   privateKey: PRIVATE_KEY,
   uptimeKumaKey: 'kVvz3dwPQt',
+  errorThreshold: 10,
 }
