@@ -4,10 +4,10 @@ import { NETWORK, ORACLES, PRIVATE_KEY, WSS_URLS } from '../core/config'
 // Chain-specific RPC URLs
 const RPC_URLS: Record<Network, string[]> = {
   mainnet: [
+    'https://peaq-rpc.publicnode.com',
     'https://quicknode1.peaq.xyz',
     'https://quicknode2.peaq.xyz',
     'https://quicknode3.peaq.xyz',
-    'https://peaq-rpc.publicnode.com',
     'https://peaq.api.onfinality.io/public',
   ],
   testnet: [
