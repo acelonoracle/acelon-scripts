@@ -1,0 +1,78 @@
+version: '3.8'
+
+networks:
+  # Define isolated networks for each service
+  etherlink_net:
+    driver: bridge
+  peaq_net:
+    driver: bridge
+
+services:
+  etherlink-cron:
+    image: registry.gitlab.papers.tech/papers/acurast/acelon-scripts:etherlink-latest
+    container_name: acelon-etherlink-cron
+    environment:
+      - NODE_ENV=production
+      - NETWORK=mainnet
+      - PRIVATE_KEY=${PRIVATE_KEY}
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 512m
+    cpus: "0.5"
+    # Isolate strictly to its own network
+    networks:
+      - etherlink_net
+    security_opt:
+      - no-new-privileges:true
+    # Drop all root capabilities
+    cap_drop:
+      - ALL
+    user: "1000:1000"
+    command: >
+      sh -c "
+        while true; do
+          echo '[$(date)] Running etherlink script...'
+          timeout 120 node dist/etherlink/index.js
+          echo '[$(date)] Sleeping for 10 minutes...'
+          sleep 600
+        done
+      "
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+  peaq-cron:
+    image: registry.gitlab.papers.tech/papers/acurast/acelon-scripts:peaq-latest
+    container_name: acelon-peaq-cron
+    environment:
+      - NODE_ENV=production
+      - NETWORK=mainnet
+      - PRIVATE_KEY=${PRIVATE_KEY}
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 512m
+    cpus: "0.5"
+    # Isolate strictly to its own network
+    networks:
+      - peaq_net
+    security_opt:
+      - no-new-privileges:true
+    # Drop all root capabilities
+    cap_drop:
+      - ALL
+    user: "1000:1000"
+    command: >
+      sh -c "
+        while true; do
+          echo '[$(date)] Running peaq script...'
+          timeout 120 node dist/peaq/index.js
+          echo '[$(date)] Sleeping for 1 minute...'
+          sleep 60
+        done
+      "
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

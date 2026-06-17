@@ -5,8 +5,10 @@ import { log } from '../core/utils'
 async function main() {
   try {
     await runMain(peaqConfig)
+    process.exit(0)
   } catch (error) {
     log(`❌ Main: unhandled error: ${error}`, 'error')
+    process.exit(1)
   }
 }
 
